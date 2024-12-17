@@ -1,0 +1,5 @@
+// Steps
+    // [ ] Create a server socket.
+    // [ ] Bind it to an IP and port.
+    // [ ] Listen for incoming client connections.
+    // [ ] Accept a client connection and communicate.
