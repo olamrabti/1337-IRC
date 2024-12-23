@@ -3,11 +3,17 @@
 
 int main(int ac, char **av)
 {
-    if (ac != 3)
+    if (ac == 3)
     {
-        (void)av;
-
-        return 0;
+        try
+        {
+            launch_server(av);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << e.what() << std::endl;
+            return 0;
+        }
     }
     return 1;
 }
