@@ -33,6 +33,7 @@ public:
     void startServer();
     void handleNewClient();
     void handleClientRequest(int client_fd);
+    void removeClient(int client_fd);
 };
 
 #endif

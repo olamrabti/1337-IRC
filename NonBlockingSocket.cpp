@@ -9,10 +9,7 @@ NonBlockingSocket::NonBlockingSocket(int socket_fd) : _fd(socket_fd)
 
 void NonBlockingSocket::setNonBlocking()
 {
-    int flags = fcntl(_fd, F_GETFL, 0);
-    if (flags == -1)
-        throw std::runtime_error("Failed to get socket flags");
-    if (fcntl(_fd, F_SETFL, flags | O_NONBLOCK) == -1)
+    if (fcntl(_fd, F_SETFL, O_NONBLOCK) == -1)
         throw std::runtime_error("Failed to set socket to non-blocking");
 }
 

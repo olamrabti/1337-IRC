@@ -40,18 +40,14 @@ void Server::startServer()
 
     int opt = 1;
     if (setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
-    {
         throw std::runtime_error("Failed to set socket option SO_REUSEADDR");
-    }
     if (bind(_server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
         throw std::runtime_error("Failed to bind the socket");
-
     if (listen(_server_fd, 10) < 0)
         throw std::runtime_error("Failed to listen on socket");
 
     std::cout << "Server is listening on port " << _port << std::endl;
 
-    // Set up poll() to monitor server_fd (for accepting new clients)
     fds[0].fd = _server_fd;
     fds[0].events = POLLIN;
 }
@@ -71,8 +67,8 @@ void Server::handleNewClient()
     fds[_client_count].events = POLLIN;
 
     std::ostringstream client_id;
-    client_id << _client_count;
-    _clients[_client_count] = "client " + client_id.str();
+    client_id << client_fd;
+    _clients[client_fd] = "client " + client_id.str();
     _client_count++;
     std::cout << "New client connected!" << std::endl;
 }
@@ -88,10 +84,11 @@ void Server::handleClientRequest(int client_fd)
         else
             throw std::runtime_error("Error receiving data from client");
         close(client_fd);
+        removeClient(client_fd);
         return;
     }
 
-    buffer[bytes_read] = '\0'; // Null-terminate the received data
+    buffer[bytes_read] = '\0';
     std::string message(buffer);
 
     std::cout << " Received : " << message << std::endl;
@@ -100,8 +97,23 @@ void Server::handleClientRequest(int client_fd)
     if (message.substr(0, 4) == "NICK")
         std::cout << "Nick mok" << std::endl;
     else if (message.substr(0, 4) == "USER")
-        std::cout << "User Flan flani" << std::endl;
+        std::cout << "User Flan flani : " << _clients[client_fd] << std::endl;
     else if (message.substr(0, 4) == "JOIN")
         std::cout << "Wakha" << std::endl;
     // other commands ...
+}
+void Server::removeClient(int client_fd)
+{
+    _clients.erase(client_fd);
+
+    for (int i = 1; i < _client_count; i++)
+    {
+        if (fds[i].fd == client_fd)
+        {
+            fds[i] = fds[_client_count - 1];
+            fds[_client_count - 1].fd = -1;
+            _client_count--;
+            return;
+        }
+    }
 }
