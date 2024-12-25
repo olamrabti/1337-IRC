@@ -1,8 +1,8 @@
 NAME = ircserv
 CC = c++
 FLAGS = -Wall -Wextra -Werror -std=c++98 
-SRC =  main.cpp irc_server.cpp
-HEADERS = irc_server.hpp
+SRC =  main.cpp NonBlockingSocket.cpp  Server.cpp
+HEADERS = NonBlockingSocket.hpp  Server.hpp
 
 OBJ = $(SRC:.cpp=.o)
 

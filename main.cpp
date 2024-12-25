@@ -1,13 +1,17 @@
 
-#include "irc_server.hpp"
+#include "Server.hpp"
 
 int main(int ac, char **av)
 {
+
     if (ac == 3)
     {
+        // TODO parse args here (olamrabt):
+        int port = std::atoi(av[1]);
         try
         {
-            launch_server(av);
+            Server IRC(port, av[2]);
+            IRC.run();
         }
         catch (const std::exception &e)
         {
