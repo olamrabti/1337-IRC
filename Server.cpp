@@ -2,7 +2,7 @@
 
 #include <sstream> // TODO might be removed !
 
-Server::Server(int port, char *password) : _server_fd(-1), _port(port), _password(password), _client_count(1) {}
+Server::Server(int port, std::string password) : _server_fd(-1), _port(port), _password(password), _client_count(1) {}
 
 void Server::run()
 {
@@ -81,8 +81,8 @@ void Server::handleClientRequest(int client_fd)
     {
         if (bytes_read == 0)
             std::cout << "Client disconnected." << std::endl;
-        else
-            throw std::runtime_error("Error receiving data from client");
+        // else
+        //     throw std::runtime_error("Error receiving data from client");
         close(client_fd);
         removeClient(client_fd);
         return;
@@ -91,7 +91,7 @@ void Server::handleClientRequest(int client_fd)
     buffer[bytes_read] = '\0';
     std::string message(buffer);
 
-    std::cout << " Received : " << message << std::endl;
+    std::cout << " Received : " << message;
 
     // Handle commands
     if (message.substr(0, 4) == "NICK")
@@ -102,6 +102,7 @@ void Server::handleClientRequest(int client_fd)
         std::cout << "Wakha" << std::endl;
     // other commands ...
 }
+
 void Server::removeClient(int client_fd)
 {
     _clients.erase(client_fd);
