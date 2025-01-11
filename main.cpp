@@ -60,33 +60,3 @@ int main(int ac, char **av)
 
     return 0;
 }
-
-// std::pair<int, std::string> parse_args(char **av)
-// {
-//     std::pair<int, std::string> params = {-1, NULL};
-//     // ./ircserv <port> <password>
-//     // port is all digit, port range (all possible ports or just 6667).
-//     // password
-//     return params;
-// }
-
-// int main(int ac, char **av)
-// {
-
-//     if (ac == 3)
-//     {
-//         // TODO parse args here :
-//         int port = std::atoi(av[1]);
-//         try
-//         {
-//             Server IRC(port, av[2]);
-//             IRC.run();
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << e.what() << std::endl;
-//             return 0;
-//         }
-//     }
-//     return 1;
-// }
