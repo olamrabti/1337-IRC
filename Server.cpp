@@ -2,7 +2,7 @@
 
 #include <sstream> // TODO might be removed !
 
-Server::Server(int port, char *password) : _server_fd(-1), _port(port), _password(password), _client_count(1) {}
+Server::Server(int port, std::string password) : _server_fd(-1), _port(port), _password(password), _client_count(1) {}
 
 void Server::run()
 {
@@ -54,7 +54,6 @@ void Server::startServer()
 
 void Server::handleNewClient()
 {
-    // std::cout << "New client to add" << std::endl;
     struct sockaddr_in client_addr;
     socklen_t client_len = sizeof(client_addr);
 
@@ -66,54 +65,62 @@ void Server::handleNewClient()
     fds[_client_count].fd = client_fd;
     fds[_client_count].events = POLLIN;
 
+    // TODO might be removed !
     std::ostringstream client_id;
     client_id << client_fd;
     _clients[client_fd] = "client " + client_id.str();
+
     _client_count++;
     std::cout << "New client connected!" << std::endl;
 }
+
 
 void Server::handleClientRequest(int client_fd)
 {
     char buffer[1024];
     int bytes_read = recv(client_fd, buffer, 1024, 0);
-    if (bytes_read <= 0)
+
+    if (bytes_read == 0)
     {
-        if (bytes_read == 0)
-            std::cout << "Client disconnected." << std::endl;
-        else
-            throw std::runtime_error("Error receiving data from client");
-        close(client_fd);
+        std::cout << "Client disconnected." << std::endl;
         removeClient(client_fd);
         return;
     }
-
-    buffer[bytes_read] = '\0';
+    else if (bytes_read < 0)
+    {
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
+            std::cout << "another connection from same terminal" << std::endl;
+        else
+        {
+            removeClient(client_fd);
+            throw std::runtime_error("Error receiving data from client");
+        }
+    }
+    else
+    {
+      buffer[bytes_read] = '\0';
     std::string message(buffer);
 
-    std::cout << " Received : " << message << std::endl;
+    std::cout << "Received: " << message;
 
     // Handle commands
-    if (message.substr(0, 4) == "NICK")
+    std::string command = trimString(message);
+    if (command.substr(0, 4) == "PASS")
+        std::cout << "PASSWORD hhh" << std::endl;
+    else if (command.substr(0, 4) == "NICK")
         std::cout << "Nick mok" << std::endl;
-    else if (message.substr(0, 4) == "USER")
-        std::cout << "User Flan flani : " << _clients[client_fd] << std::endl;
-    else if (message.substr(0, 4) == "JOIN")
-        std::cout << "Wakha" << std::endl;
-    // other commands ...
-}
-void Server::removeClient(int client_fd)
-{
-    _clients.erase(client_fd);
-
-    for (int i = 1; i < _client_count; i++)
-    {
-        if (fds[i].fd == client_fd)
-        {
-            fds[i] = fds[_client_count - 1];
-            fds[_client_count - 1].fd = -1;
-            _client_count--;
-            return;
-        }
+    else if (command.substr(0, 4) == "USER")
+        std::cout << "User Flan flani : " << _clients[client_fd].getNickname() << std::endl;
+    // if () // TODO iser is authentificated
+    else if (command.substr(0, 4) == "JOIN")
+        ChannelJoin(client_fd, command);
+    else if (command.substr(0, 4) == "MODE") // TODO
+        channelMode(client_fd, command);
+    else if (command.substr(0, 4) == "KICK")
+        channelKick(client_fd, command); // TODO to be tested when NICK is implemented
+    else if (command.substr(0, 5) == "TOPIC")
+        channelTopic(client_fd, command);
+    else if (command.substr(0, 6) == "INVITE") // TODO
+        channelInvite(client_fd, command);
     }
 }
