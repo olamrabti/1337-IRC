@@ -1,7 +1,0 @@
-// Steps
-    // [x] Create a server socket.
-    // [x] Bind it to an IP and port.
-    // [x] Listen for incoming client connections.
-    // [x] Accept a client connection and communicate.
-    // [ ] PRVMSG , JOIN, Authentication (create client class) + bonus : Salmane.
-    // [ ] channels , other cmds : _pp.
