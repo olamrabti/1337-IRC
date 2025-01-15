@@ -10,6 +10,9 @@ SRC =  main.cpp\
 		topic.cpp\
 		join.cpp\
 		kick.cpp\
+		user.cpp\
+		nick.cpp\
+		pass.cpp\
 
 HEADERS = NonBlockingSocket.hpp\
 			Server.hpp Channel.hpp\

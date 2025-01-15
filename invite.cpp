@@ -1,17 +1,14 @@
 #include "Server.hpp"
 
-void Server::channelInvite(int client_fd, std::string message)
+void Server::channelInvite(int client_fd, std::vector<std::string> command)
 {
-    std::string newMessage = trimString(message);
-    std::vector<std::string> splits = split(newMessage, ' ');
-    std::string nickname = splits[1];
-    std::string channelName = splits[2];
-    if (splits.size() != 3)
+    if (command.size() != 3)
     {
         std::cout << "Error: INVITE <nickname> <channel>" << std::endl;
         return;
     }
-
+    std::string nickname = command[1];
+    std::string channelName = command[2];
     std::map<std::string, Channel>::iterator it;
     it = _channels.find(channelName);
     if (it == _channels.end())

@@ -74,7 +74,6 @@ void Server::handleNewClient()
     std::cout << "New client connected!" << std::endl;
 }
 
-
 void Server::handleClientRequest(int client_fd)
 {
     char buffer[1024];
@@ -98,29 +97,47 @@ void Server::handleClientRequest(int client_fd)
     }
     else
     {
-      buffer[bytes_read] = '\0';
-    std::string message(buffer);
+        buffer[bytes_read] = '\0';
+        std::string message(buffer);
+        std::cout << "Received: " << message;
+        // Handle commands
+        std::vector<std::string> command = split(trimString(message), ' ');
+        if (command.empty())
+            return;
 
-    std::cout << "Received: " << message;
+        Client &currClient = _clients[client_fd];
 
-    // Handle commands
-    std::string command = trimString(message);
-    if (command.substr(0, 4) == "PASS")
-        std::cout << "PASSWORD hhh" << std::endl;
-    else if (command.substr(0, 4) == "NICK")
-        std::cout << "Nick mok" << std::endl;
-    else if (command.substr(0, 4) == "USER")
-        std::cout << "User Flan flani : " << _clients[client_fd].getNickname() << std::endl;
-    // if () // TODO iser is authentificated
-    else if (command.substr(0, 4) == "JOIN")
-        ChannelJoin(client_fd, command);
-    else if (command.substr(0, 4) == "MODE") // TODO
-        channelMode(client_fd, command);
-    else if (command.substr(0, 4) == "KICK")
-        channelKick(client_fd, command); // TODO to be tested when NICK is implemented
-    else if (command.substr(0, 5) == "TOPIC")
-        channelTopic(client_fd, command);
-    else if (command.substr(0, 6) == "INVITE") // TODO
-        channelInvite(client_fd, command);
+        if (command[0] == "PASS")
+        {
+            PassCommand(client_fd, command);
+            currClient.setAuthStatus(0x01);
+        }
+        else if (command[0] == "NICK")
+        {
+            NickCommand(client_fd, command);
+            currClient.setAuthStatus(0x02);
+        }
+        else if (command[0] == "USER")
+        {
+            UserCommand(client_fd, command);
+            currClient.setAuthStatus(0x04);
+        }
+        else if (currClient.isFullyAuthenticated())
+        {
+            if (command[0] == "JOIN")
+                ChannelJoin(client_fd, command);
+            else if (command[0] == "MODE") // TODO
+                channelMode(client_fd, command);
+            else if (command[0] == "KICK")
+                channelKick(client_fd, command); // TODO to be tested when NICK is implemented
+            else if (command[0] == "TOPIC")
+                channelTopic(client_fd, command);
+            else if (command[0] == "INVITE") // TODO
+                channelInvite(client_fd, command);
+        }
+        else
+        {
+            std::cout << "Error: Client must be authenticated (PASS, NICK, USER) before any other command" << std::endl;
+        }
     }
 }

@@ -59,7 +59,7 @@ public:
 
 };
 
-std::map<std::string, std::string> parseJoinCommand(std::string message);
+std::map<std::string, std::string> parseJoinCommand(std::vector<std::string> message);
 std::vector<std::string> split(const std::string &str, char delimiter);
 std::string trimString(const std::string &input);
 

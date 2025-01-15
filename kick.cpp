@@ -16,18 +16,16 @@ void Server::removeClient(int client_fd)
     }
 }
 
-void Server::channelKick(int client_fd, std::string message)
+void Server::channelKick(int client_fd, std::vector<std::string> command) // TODO kick myself and delete channel
 {
-    std::string newMessage = trimString(message);
-    std::vector<std::string> splits = split(newMessage, ' ');
-    std::string channelName = splits[1];
-    std::string nickname = splits[2];
-    std::string reason = splits[3]; // TODO reason is more then one word
-    if (splits.size() < 3)
+    if (command.size() < 3)
     {
         std::cout << "Error: KICK <channel> <nickname>" << std::endl;
         return;
     }
+    std::string channelName = command[1];
+    std::string nickname = command[2];
+    std::string reason = command[3]; // TODO reason is more then one word
 
     std::map<std::string, Channel>::iterator it;
     it = _channels.find(channelName);

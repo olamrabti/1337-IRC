@@ -1,18 +1,15 @@
 #include "Server.hpp"
 
-void Server::channelMode(int client_fd, std::string message) // TODO to perform a MODE command you need to be an operator
+void Server::channelMode(int client_fd, std::vector<std::string> command) // TODO to perform a MODE command you need to be an operator
 {
-    std::string newMessage = trimString(message);
-    std::vector<std::string> splits = split(newMessage, ' ');
-    std::string channelName = splits[1];
-    std::string mode = splits[2];
-    std::string parameter = splits[3];
-    if (splits.size() > 4)
+    if (command.size() < 3)
     {
-        std::cout << "Error: invalid mode command" << std::endl;
-        return;
+        std::cout << "Error" << std::endl;
+        return ;
     }
-
+    std::string channelName = command[1];
+    std::string mode = command[2];
+    std::string parameter = command[3];
     std::map<std::string, Channel>::iterator it;
     it = _channels.find(channelName);
     if (it == _channels.end())
@@ -58,7 +55,7 @@ void Server::channelMode(int client_fd, std::string message) // TODO to perform 
         }
         else if (mode == "+i")
         {
-            if (splits.size() != 3)
+            if (command.size() != 3)
             {
                 std::cout << "Error: invalid mode command try MODE <channel> {+i|-i}" << std::endl;
             }
@@ -66,7 +63,7 @@ void Server::channelMode(int client_fd, std::string message) // TODO to perform 
         }
         else if (mode == "-i")
         {
-            if (splits.size() != 3)
+            if (command.size() != 3)
             {
                 std::cout << "Error: invalid mode command try MODE <channel> {+i|-i}" << std::endl;
             }
@@ -74,7 +71,7 @@ void Server::channelMode(int client_fd, std::string message) // TODO to perform 
         }
         else if (mode == "+k")
         {
-            if (splits.size() != 4)
+            if (command.size() != 4)
             {
                 std::cout << "Error: invalid mode command try MODE <channel> {+k|-k} <key>" << std::endl;
             }
@@ -82,7 +79,7 @@ void Server::channelMode(int client_fd, std::string message) // TODO to perform 
         }
         else if (mode == "-k")
         {
-            if (splits.size() != 3)
+            if (command.size() != 3)
             {
                 std::cout << "Error: invalid mode command try MODE <channel> {+k|-k} <key>" << std::endl;
             }
@@ -90,7 +87,7 @@ void Server::channelMode(int client_fd, std::string message) // TODO to perform 
         }
         else if (mode == "+l")
         {
-            if (splits.size() != 4)
+            if (command.size() != 4)
             {
                 std::cout << "Error: invalid mode command try MODE <channel> {+l|-l} <limit>" << std::endl;
             }
@@ -99,7 +96,7 @@ void Server::channelMode(int client_fd, std::string message) // TODO to perform 
         }
         else if (mode == "-l")
         {
-            if (splits.size() != 3)
+            if (command.size() != 3)
             {
                 std::cout << "Error: invalid mode command try MODE <channel> {+l|-l} <limit>" << std::endl;
             }
@@ -107,7 +104,7 @@ void Server::channelMode(int client_fd, std::string message) // TODO to perform 
         }
         else if (mode == "+t")
         {
-            if (splits.size() != 3)
+            if (command.size() != 3)
             {
                 std::cout << "Error: MODE <channel> {+t|-t}" << std::endl;
             }
@@ -115,7 +112,7 @@ void Server::channelMode(int client_fd, std::string message) // TODO to perform 
         }
         else if (mode == "-t")
         {
-            if (splits.size() != 3)
+            if (command.size() != 3)
             {
                 std::cout << "Error: MODE <channel> {+t|-t}" << std::endl;
             }

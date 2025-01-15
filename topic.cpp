@@ -1,16 +1,14 @@
 #include "Server.hpp"
 
-void Server::channelTopic(int client_fd, std::string message)
+void Server::channelTopic(int client_fd, std::vector<std::string> command)
 {
-    std::string newMessage = trimString(message);
-    std::vector<std::string> splits = split(newMessage, ' ');
-    std::string channelName = splits[1];
-    std::string newTopic = splits[2];
-    if (splits.size() < 2 || splits.size() > 3)
+    if (command.size() < 2 || command.size() > 3)
     {
         std::cout << "Error: TOPIC <channel> [<topic>]\n";
         return;
     }
+    std::string channelName = command[1];
+    std::string newTopic = command[2];
     std::map<std::string, Channel>::iterator it;
     it = _channels.find(channelName);
     if (it == _channels.end())
@@ -27,7 +25,7 @@ void Server::channelTopic(int client_fd, std::string message)
             std::cout << "Error: " << currClient.getNickname() << " is not an operator in channel " << channelName << std::endl;
             return;
         }
-        if (splits.size() == 2)
+        if (command.size() == 2)
         {
             std::cout << "Topic for channel " << channelName << " is " << currChannel.getTopic() << std::endl;
         }

@@ -1,10 +1,3 @@
-// Steps
-    // [x] Create a server socket.
-    // [x] Bind it to an IP and port.
-    // [x] Listen for incoming client connections.
-    // [x] Accept a client connection and communicate.
-    // [ ] PRIVMSG , Authentication (create client class) + bonus : Salmane.
-
 pp:
     [ ] Command: JOIN <channel> [<key>]
     Example: JOIN #myChannel
@@ -64,3 +57,9 @@ Example:
 [ ] what if someone set ser Limit to zero 
 
 [ ] TODO space before command 
+
+[ ] multiple Modes {[+|-]|o|p|s|i|t|n|b|v}
+
+[ ] kick deletes channel if hes the last one 
+[ ] handle operator of channels if all the operatores leaves 
+[ ] MODE #channel +i -m +l 100 +o user1
