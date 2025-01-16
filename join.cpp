@@ -46,6 +46,11 @@ void Server::joinCommand(std::string channelName, std::string key, int client_fd
 
 void Server::ChannelJoin(int client_fd, std::vector<std::string> command)
 {
+    if (command.size() < 2)
+    {
+        std::cout << "Error : in JOIN command" << std::endl;
+        return;
+    }
 	std::map<std::string, std::string> tokens = parseJoinCommand(command);
     if (tokens.size() == 0)
     {

@@ -1,15 +1,165 @@
 #include "Server.hpp"
 
-void Server::channelMode(int client_fd, std::vector<std::string> command) // TODO to perform a MODE command you need to be an operator
+bool isValidMode(char c)
+{
+    return (c == 'i' || c == 't' || c == 'k' || c == 'o' || c == 'l');
+}
+
+std::vector<std::string> parseModes(const std::string &modes)
+{
+    std::vector<std::string> result;
+    std::cout << "|modes:| " << modes << std::endl;
+    bool give = true;
+    for (size_t i = 0; i < modes.size(); i++)
+    {
+        if (modes[i] == '+')
+            give = true;
+        else if (modes[i] == '-')
+            give = false;
+        else if (isValidMode(modes[i]))
+            result.push_back((give ? "+" : "-") + std::string(1, modes[i]));
+        else
+        {
+            std::cout << "Error : invalide MODE type \n";
+            return std::vector<std::string>();
+        }
+    }
+    return result;
+}
+
+std::vector<std::string> parseParametres(std::vector<std::string> command)
+{
+    std::vector<std::string> result;
+    if (command.size() > 3)
+        for (size_t i = 3; i < command.size(); i++)
+            result.push_back(command[i]);
+    return result;
+}
+
+void oModeParam(Channel &currChannel, std::string parameter, std::string mode)
+{
+    // user need to be in the channel and need to be an operator
+    if (parameter.empty())
+    {
+        std::cout << "ERROR missing parametre\n";
+        return;
+    }
+    if (mode == "+o")
+    {
+        std::map<std::string, Client>::iterator it_client;
+        it_client = currChannel.getClients().find(parameter);
+        if (it_client == currChannel.getClients().end())
+        {
+            std::cout << "Error: " << parameter << " is not in channel " << currChannel.getName() << std::endl;
+            return;
+        }
+        if (currChannel.isOperator(parameter))
+        {
+            std::cout << "Error: " << parameter << " is already an operator in channel " << std::endl;
+            return; // TODO
+        }
+        currChannel.addOperator(parameter);
+    }
+    else if (mode == "-o")
+    {
+        std::map<std::string, Client>::iterator it_client;
+        it_client = currChannel.getClients().find(parameter);
+        if (it_client == currChannel.getClients().end())
+        {
+            std::cout << "Error: " << parameter << " is not in channel " << currChannel.getName() << std::endl;
+            return;
+        }
+        if (!currChannel.isOperator(parameter))
+        {
+            std::cout << "Error: " << parameter << " is not an operator in channel " << std::endl;
+            return; // TODO
+        }
+        currChannel.removeOperator(parameter);
+    }
+}
+
+void iModeParam(Channel &currChannel, std::string mode)
+{
+    if (mode == "+i")
+        currChannel.setInviteOnly(true);
+    else if (mode == "-i")
+        currChannel.setInviteOnly(false);
+}
+
+void kModeParam(Channel &currChannel, std::string parameter, std::string mode)
+{
+    if (mode == "+k")
+    {
+        if (parameter.empty())
+        {
+            std::cout << "ERROR missing pass param\n";
+            return;
+        }
+        currChannel.setKey(parameter);
+    }
+    else if (mode == "-k")
+        currChannel.setKey("");
+}
+
+void lModeParam(Channel &currChannel, std::string parameter, std::string mode)
+{
+    if (mode == "+l")
+    {
+        if (parameter.empty())
+        {
+            std::cout << "ERROR missing limit param\n";
+            return;
+        }
+        // TODO parse param
+        currChannel.setUserLimit(std::stoi(parameter));
+        // try
+        // {
+        //     int userLimit = std::stoi(parameter);
+        //     currChannel.setUserLimit(userLimit);
+        // }
+        // catch (const std::invalid_argument &e)
+        // {
+        //     std::cerr << "Error: Invalid parameter for +l mode. Not a number." << std::endl;
+        //     throw;
+        // }
+        // catch (const std::out_of_range &e)
+        // {
+        //     std::cerr << "Error: Parameter for +l mode is out of range." << std::endl;
+        //     throw;
+        // }
+    }
+    else if (mode == "-l")
+        currChannel.setUserLimit(0);
+}
+
+void tModeParam(Channel &currChannel, std::string mode)
+{
+    if (mode == "+t")
+        currChannel.setTopicLock(true);
+    else if (mode == "-t")
+        currChannel.setTopicLock(false);
+}
+
+void Server::channelMode(int client_fd, std::vector<std::string> command)
 {
     if (command.size() < 3)
     {
         std::cout << "Error" << std::endl;
-        return ;
+        return;
     }
     std::string channelName = command[1];
-    std::string mode = command[2];
-    std::string parameter = command[3];
+    std::vector<std::string> modes;
+    if (command.size() >= 3)
+        modes = parseModes(command[2]);
+    if (modes.empty())
+    {
+        std::cout << "Error: empty modes\n";
+        return;
+    }
+    std::vector<std::string> parameters = parseParametres(command);
+    // for (auto mode : modes)
+    //     std::cout << "|mode|: " << mode << std::endl;
+
     std::map<std::string, Channel>::iterator it;
     it = _channels.find(channelName);
     if (it == _channels.end())
@@ -20,109 +170,46 @@ void Server::channelMode(int client_fd, std::vector<std::string> command) // TOD
     else
     {
         Client currClient = _clients[client_fd];
-        Channel currChannel = it->second;
+        Channel &currChannel = it->second;
+
         if (currChannel.isOperator(currClient.getNickname()) == false)
         {
             std::cout << "Error: " << currClient.getNickname() << " is not an operator in channel " << channelName << std::endl;
             return;
         }
-        if (mode == "+o")
+        int paramCount = 0;
+        for (size_t i = 0; i < modes.size(); i++)
         {
-            // user need to be in the channel and need to be an operator
-            std::map<std::string, Client>::iterator it_client = currChannel.getClients().find(parameter);
-            if (it_client == currChannel.getClients().end())
+            if (modes[i] == "+o" || modes[i] == "-o")
             {
-                std::cout << "Error: " << parameter << " is not in channel " << channelName << std::endl;
+                oModeParam(currChannel, parameters[paramCount], modes[i]);
+                paramCount++;
+            }
+            else if (modes[i] == "+i" || modes[i] == "-i")
+            {
+                iModeParam(currChannel, modes[i]);
+            }
+            else if (modes[i] == "+k" || modes[i] == "-k")
+            {
+                kModeParam(currChannel, parameters[paramCount], modes[i]);
+                if (modes[i] == "+k")
+                    paramCount++;
+            }
+            else if (modes[i] == "+l" || modes[i] == "-l")
+            {
+                lModeParam(currChannel, parameters[paramCount], modes[i]);
+                if (modes[i] == "+l")
+                    paramCount++;
+            }
+            else if (modes[i] == "+t" || modes[i] == "-t")
+            {
+                tModeParam(currChannel, modes[i]);
+            }
+            else
+            {
+                std::cout << "Error: invalid mode" << std::endl;
                 return;
             }
-            if (currChannel.isOperator(parameter))
-            {
-                std::cout << "Error: " << parameter << " is already an operator in channel " << channelName << std::endl;
-                return;
-            }
-            currChannel.addOperator(parameter);
         }
-        else if (mode == "-o")
-        {
-            // user need to be in the channel and need to be an operator
-            std::map<std::string, Client>::iterator it_client = currChannel.getClients().find(parameter);
-            if (it_client == currChannel.getClients().end())
-            {
-                std::cout << "Error: " << parameter << " is not in channel " << channelName << std::endl;
-                return;
-            }
-            currChannel.removeOperator(parameter);
-        }
-        else if (mode == "+i")
-        {
-            if (command.size() != 3)
-            {
-                std::cout << "Error: invalid mode command try MODE <channel> {+i|-i}" << std::endl;
-            }
-            currChannel.setInviteOnly(true);
-        }
-        else if (mode == "-i")
-        {
-            if (command.size() != 3)
-            {
-                std::cout << "Error: invalid mode command try MODE <channel> {+i|-i}" << std::endl;
-            }
-            currChannel.setInviteOnly(false);
-        }
-        else if (mode == "+k")
-        {
-            if (command.size() != 4)
-            {
-                std::cout << "Error: invalid mode command try MODE <channel> {+k|-k} <key>" << std::endl;
-            }
-            currChannel.setKey(parameter);
-        }
-        else if (mode == "-k")
-        {
-            if (command.size() != 3)
-            {
-                std::cout << "Error: invalid mode command try MODE <channel> {+k|-k} <key>" << std::endl;
-            }
-            currChannel.setKey("");
-        }
-        else if (mode == "+l")
-        {
-            if (command.size() != 4)
-            {
-                std::cout << "Error: invalid mode command try MODE <channel> {+l|-l} <limit>" << std::endl;
-            }
-            // TODO parce the parameter
-            currChannel.setUserLimit(std::stoi(parameter));
-        }
-        else if (mode == "-l")
-        {
-            if (command.size() != 3)
-            {
-                std::cout << "Error: invalid mode command try MODE <channel> {+l|-l} <limit>" << std::endl;
-            }
-            currChannel.setUserLimit(0);
-        }
-        else if (mode == "+t")
-        {
-            if (command.size() != 3)
-            {
-                std::cout << "Error: MODE <channel> {+t|-t}" << std::endl;
-            }
-            currChannel.setTopicLock(true);
-        }
-        else if (mode == "-t")
-        {
-            if (command.size() != 3)
-            {
-                std::cout << "Error: MODE <channel> {+t|-t}" << std::endl;
-            }
-            currChannel.setTopicLock(false);
-        }
-        else
-        {
-            std::cout << "Error: invalid mode" << std::endl;
-            return;
-        }
-
     }
 }

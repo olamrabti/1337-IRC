@@ -82,7 +82,7 @@ void Server::handleClientRequest(int client_fd)
     if (bytes_read == 0)
     {
         std::cout << "Client disconnected." << std::endl;
-        removeClient(client_fd);
+        this->removeClient(client_fd);
         return;
     }
     else if (bytes_read < 0)
@@ -91,7 +91,7 @@ void Server::handleClientRequest(int client_fd)
             std::cout << "another connection from same terminal" << std::endl;
         else
         {
-            removeClient(client_fd);
+            this->removeClient(client_fd);
             throw std::runtime_error("Error receiving data from client");
         }
     }
@@ -102,8 +102,12 @@ void Server::handleClientRequest(int client_fd)
         std::cout << "Received: " << message;
         // Handle commands
         std::vector<std::string> command = split(trimString(message), ' ');
+
         if (command.empty())
             return;
+        
+        for (auto com: command)
+            std::cout << ">com<: " << com << std::endl; 
 
         Client &currClient = _clients[client_fd];
 
@@ -126,18 +130,19 @@ void Server::handleClientRequest(int client_fd)
         {
             if (command[0] == "JOIN")
                 ChannelJoin(client_fd, command);
-            else if (command[0] == "MODE") // TODO
+            else if (command[0] == "MODE")
                 channelMode(client_fd, command);
             else if (command[0] == "KICK")
-                channelKick(client_fd, command); // TODO to be tested when NICK is implemented
+                channelKick(client_fd, command);
             else if (command[0] == "TOPIC")
                 channelTopic(client_fd, command);
-            else if (command[0] == "INVITE") // TODO
+            else if (command[0] == "INVITE")
                 channelInvite(client_fd, command);
         }
-        else
-        {
-            std::cout << "Error: Client must be authenticated (PASS, NICK, USER) before any other command" << std::endl;
-        }
+
+        // else
+        // {
+        //     std::cout << "Error: Client must be authenticated (PASS, NICK, USER) before any other command" << std::endl;
+        // }
     }
 }

@@ -2,6 +2,7 @@
 
 void Server::removeClient(int client_fd)
 {
+    close(client_fd);
     _clients.erase(client_fd);
 
     for (int i = 1; i < _client_count; i++)

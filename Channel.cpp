@@ -211,14 +211,8 @@ void Channel::removeOperator(const std::string &nickname)
 {
 	std::set<std::string>::iterator it;
 	it = _operators.find(nickname);
-	if (it == _operators.end())
-	{
-		std::cout << "Error: " << nickname << " is not an operator in channel " << _name << std::endl;
-	}
-	else
-	{
+	if (it != _operators.end())
 		_operators.erase(it);
-	}
 }
 
 void Channel::addInvited(const std::string &nickname)
