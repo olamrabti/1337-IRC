@@ -1,9 +1,10 @@
 #include "Channel.hpp"
+#include "Server.hpp"
 #include <sstream>
 
 Channel::Channel(void) {}
 
-bool Channel::isValidChannelName(const std::string &name) const
+bool	isValidChannelName(const std::string &name)
 {
 	if (name.empty() || (name[0] != '#' && name[0] != '&'))
 		return false;
@@ -14,15 +15,12 @@ bool Channel::isValidChannelName(const std::string &name) const
 
 Channel::Channel(const std::string &name, const std::string &key)
 {
-	if (!isValidChannelName(name)) // Ensure the name conforms to IRC rules
-		throw std::invalid_argument("Invalid channel name");
-
 	_name = name;
-	_topic = "";		 // Default topic is unset
-	_key = key;			 // Set the provided key (empty for no key)
-	_userLimit = 0;		 // No user limit by default
-	_inviteOnly = false; // Channel is open to all
-	_topicLock = false;	 // Topic can be modified by anyone
+	_topic = "";
+	_key = key;
+	_userLimit = 0;
+	_inviteOnly = false;
+	_topicLock = false;
 }
 
 Channel::~Channel(void) {}

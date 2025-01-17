@@ -6,12 +6,13 @@
 class Client
 {
 	private :
+		int _client_fd;
 		std::string _nickname;
 		std::string _username;
 		std::string _hostname;
 		std::string _servername;
 		std::string _realname;
-		std::string _password;
+		// std::string _password;
 		bool _registered;
 		int _authStatus; // Bitwise flag for authentication status
 	public :
@@ -19,6 +20,11 @@ class Client
 		Client(std::string nickname);
 		~Client(void);
 		Client &operator = (Client const &other);
+		int getClientFd(void) const;
+		void setClientFd(int fd);
+		std::string getHostName(void);
+		std::string getRealName(void);
+		std::string getServerName(void);
 		const std::string &getNickname(void) const;
 		void setPassword(const std::string &password);
 		const std::string &getPassword() const;
@@ -33,5 +39,7 @@ class Client
 		int getAuthStatus() const;
 		bool isFullyAuthenticated() const;
 };
+
+bool	isValidChannelName(const std::string &name);
 
 #endif

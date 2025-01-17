@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include "numericReplies.hpp"
 
 void Server::joinCommand(std::string channelName, std::string key, int client_fd)
 {
@@ -7,59 +8,55 @@ void Server::joinCommand(std::string channelName, std::string key, int client_fd
     it = _channels.find(channelName);
     if (it == _channels.end())
     {
+        if (!isValidChannelName(channelName))
+        {
+		    // sendReply(client_fd, ERR_BADCHANMASK, channelName + " :Invalid channel name");
+            return ;
+        }
         Channel newChannel(channelName, key);
         newChannel.addClient(currClient);
         newChannel.addOperator(currClient.getNickname());
         _channels[channelName] = newChannel;
-        std::cout << "Channel " << channelName << " created" << std::endl;
+        // sendReply(client_fd, RPL_TOPIC, channelName + " :" + newChannel.getTopic());
+        // std::cout << "Channel " << channelName << " created" << std::endl;
     }
     else
     {
-        std::cout << "Channel " << channelName << " already exists" << std::endl;
+        // std::cout << "Channel " << channelName << " already exists" << std::endl;
         Channel currChannel = it->second;
-        if (currChannel.getKey() == key)
-            std::cout << "Key is correct" << std::endl;
-        else
-        {
-            std::cout << "Key is incorrect" << std::endl;
+        if (currChannel.getInviteOnly() && !currChannel.isInvited(currClient.getNickname())) {
+            // sendReply(client_fd, ERR_INVITEONLYCHAN, channelName + " :Cannot join channel (+i)");
             return;
-        }
-
-        if (currChannel.getInviteOnly() == true)
-        {
-            std::set<std::string>::iterator it_invited;
-            it_invited = currChannel.getInvited().find(currClient.getNickname());
-            if (it_invited == currChannel.getInvited().end())
-            {
-                std::cout << "Error: channel is invit only and you are not invited \n";
-                return;
-            }
         }
 
         if (currChannel.getUserLimit() != 0 && currChannel.getUserCount() >= currChannel.getUserLimit())
         {
-            std::cout << "Error: channel " << channelName << " is full" << std::endl;
+            // sendReply(client_fd, ERR_CHANNELISFULL, channelName + " :Cannot join channel (+l)");
             return;
         }
-        std::map<std::string, Client>::iterator it_client = currChannel.getClients().find(currClient.getNickname());
-        if (it_client == currChannel.getClients().end())
-        {
-            currChannel.addClient(currClient);
-            std::cout << "Client " << currClient.getNickname() << " added to channel " << channelName << std::endl;
+
+        if (currChannel.getKey() != key) {
+            // sendReply(client_fd, ERR_BADCHANNELKEY, channelName + " :Cannot join channel (+k)");
+            return;
         }
-        else
-        {
-            std::cout << "Client " << currClient.getNickname() << " already exists in channel " << channelName << std::endl;
+
+        if (currChannel.getClients().find(currClient.getNickname()) != currChannel.getClients().end()) {
+            // sendReply(client_fd, "NOTICE", ":You are already in the channel");
+            return;
         }
+
+        currChannel.addClient(currClient);
+        sendReply(client_fd, "");
     }
 }
 
 
 void Server::ChannelJoin(int client_fd, std::vector<std::string> command)
 {
+    std::cout << "mre7ba \n";
     if (command.size() < 2)
     {
-        std::cout << "Error : in JOIN command" << std::endl;
+        sendReply(client_fd , ERR_NEEDMOREPARAMS(_clients[client_fd].getNickname(), command[0]));
         return;
     }
 	std::map<std::string, std::string> tokens = parseJoinCommand(command);

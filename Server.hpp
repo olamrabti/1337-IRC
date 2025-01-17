@@ -19,6 +19,7 @@
 
 #include "Client.hpp"
 #include "Channel.hpp"
+#include "numericReplies.hpp"
 
 class Channel;
 class Client;
@@ -56,8 +57,9 @@ public:
     void NickCommand(int client_fd, std::vector<std::string> command);
     void UserCommand(int client_fd, std::vector<std::string> command);
 
-    void sendReply(int client_fd, const std::string& code, const std::string& message);
 
 };
+
+void    sendReply(int client_fd, std::string response);
 
 #endif

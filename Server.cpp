@@ -108,21 +108,12 @@ void Server::handleClientRequest(int client_fd)
         Client &currClient = _clients[client_fd];
 
         if (command[0] == "PASS")
-        {
             PassCommand(client_fd, command);
-            currClient.setAuthStatus(0x01);
-        }
-        else if (command[0] == "NICK")
-        {
+        else if (command[0] == "NICK") // TODO  NICK should be before USER
             NickCommand(client_fd, command);
-            currClient.setAuthStatus(0x02);
-        }
         else if (command[0] == "USER")
-        {
             UserCommand(client_fd, command);
-            currClient.setAuthStatus(0x04);
-        }
-        else if (currClient.isFullyAuthenticated())
+        if (currClient.isFullyAuthenticated())
         {
             if (command[0] == "JOIN")
                 ChannelJoin(client_fd, command);
@@ -143,8 +134,9 @@ void Server::handleClientRequest(int client_fd)
     }
 }
 
-void Server::sendReply(int client_fd, const std::string& code, const std::string& message)
+void    sendReply(int client_fd, std::string response)
 {
-    std::string reply = code + " " + message + "\r\n";
-    send(client_fd, reply.c_str(), reply.size(), 0);
+    std::string message = response;
+    if (send(client_fd, message.c_str(), message.length(), 0) <= 0)
+        std::cerr << "send() failed" << std::endl;
 }

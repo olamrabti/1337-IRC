@@ -16,15 +16,15 @@ const std::string &Client::getNickname(void) const
 	return _nickname;
 }
 
-void Client::setPassword(const std::string &password)
-{
-    _password = password;
-}
+// void Client::setPassword(const std::string &password)
+// {
+//     _password = password;
+// }
 
-const std::string &Client::getPassword() const
-{
-    return _password;
-}
+// const std::string &Client::getPassword() const
+// {
+//     return _password;
+// }
 
 bool Client::isRegistered() const
 {
@@ -74,4 +74,29 @@ int Client::getAuthStatus() const
 bool Client::isFullyAuthenticated() const
 {
     return (_authStatus & 0x07) == 0x07;
+}
+
+std::string Client::getHostName(void)
+{
+    return _hostname;
+}
+
+std::string Client::getRealName(void)
+{
+    return _realname;
+}
+
+std::string Client::getServerName(void)
+{
+    return _servername;
+}
+
+int Client::getClientFd(void) const
+{
+    return _client_fd;
+}
+
+void Client::setClientFd(int fd)
+{
+    this->_client_fd = fd;
 }
