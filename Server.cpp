@@ -102,12 +102,8 @@ void Server::handleClientRequest(int client_fd)
         std::cout << "Received: " << message;
         // Handle commands
         std::vector<std::string> command = split(trimString(message), ' ');
-
         if (command.empty())
             return;
-        
-        for (auto com: command)
-            std::cout << ">com<: " << com << std::endl; 
 
         Client &currClient = _clients[client_fd];
 

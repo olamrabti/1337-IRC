@@ -8,7 +8,7 @@ bool isValidMode(char c)
 std::vector<std::string> parseModes(const std::string &modes)
 {
     std::vector<std::string> result;
-    std::cout << "|modes:| " << modes << std::endl;
+    // std::cout << "|modes:| " << modes << std::endl;
     bool give = true;
     for (size_t i = 0; i < modes.size(); i++)
     {
@@ -86,23 +86,27 @@ void iModeParam(Channel &currChannel, std::string mode)
         currChannel.setInviteOnly(false);
 }
 
-void kModeParam(Channel &currChannel, std::string parameter, std::string mode)
+void pluskModeParam(Channel &currChannel, std::string parameter, std::string mode)
 {
     if (mode == "+k")
-    {
-        if (parameter.empty())
-        {
-            std::cout << "ERROR missing pass param\n";
-            return;
-        }
         currChannel.setKey(parameter);
-    }
-    else if (mode == "-k")
+}
+
+void minuskModeParam(Channel &currChannel, std::string mode)
+{
+    if (mode == "-k")
         currChannel.setKey("");
 }
 
-void lModeParam(Channel &currChannel, std::string parameter, std::string mode)
+void minuslModeParam(Channel &currChannel, std::string mode)
 {
+    if (mode == "-l")
+        currChannel.setUserLimit(0);
+}
+
+void pluslModeParam(Channel &currChannel, std::string parameter, std::string mode)
+{
+    std::cout << "currChannel: " << currChannel.getName() << " param: " << parameter << " mode: " << mode << std::endl;
     if (mode == "+l")
     {
         if (parameter.empty())
@@ -112,24 +116,7 @@ void lModeParam(Channel &currChannel, std::string parameter, std::string mode)
         }
         // TODO parse param
         currChannel.setUserLimit(std::stoi(parameter));
-        // try
-        // {
-        //     int userLimit = std::stoi(parameter);
-        //     currChannel.setUserLimit(userLimit);
-        // }
-        // catch (const std::invalid_argument &e)
-        // {
-        //     std::cerr << "Error: Invalid parameter for +l mode. Not a number." << std::endl;
-        //     throw;
-        // }
-        // catch (const std::out_of_range &e)
-        // {
-        //     std::cerr << "Error: Parameter for +l mode is out of range." << std::endl;
-        //     throw;
-        // }
     }
-    else if (mode == "-l")
-        currChannel.setUserLimit(0);
 }
 
 void tModeParam(Channel &currChannel, std::string mode)
@@ -157,8 +144,8 @@ void Server::channelMode(int client_fd, std::vector<std::string> command)
         return;
     }
     std::vector<std::string> parameters = parseParametres(command);
-    // for (auto mode : modes)
-    //     std::cout << "|mode|: " << mode << std::endl;
+    for (auto mode : modes)
+        std::cout << "|mode|: " << mode << std::endl;
 
     std::map<std::string, Channel>::iterator it;
     it = _channels.find(channelName);
@@ -182,8 +169,16 @@ void Server::channelMode(int client_fd, std::vector<std::string> command)
         {
             if (modes[i] == "+o" || modes[i] == "-o")
             {
-                oModeParam(currChannel, parameters[paramCount], modes[i]);
-                paramCount++;
+                if (parameters.size() > paramCount) // TODO
+                {
+                    oModeParam(currChannel, parameters[paramCount], modes[i]);
+                    paramCount++;
+                }
+                else 
+                {
+                    std::cout << "error not enough param\n";
+                    return;
+                }
             }
             else if (modes[i] == "+i" || modes[i] == "-i")
             {
@@ -191,15 +186,41 @@ void Server::channelMode(int client_fd, std::vector<std::string> command)
             }
             else if (modes[i] == "+k" || modes[i] == "-k")
             {
-                kModeParam(currChannel, parameters[paramCount], modes[i]);
                 if (modes[i] == "+k")
-                    paramCount++;
+                {
+                    if (parameters.size() > paramCount) // TODO
+                    {
+                        pluskModeParam(currChannel, parameters[paramCount], modes[i]);
+                        paramCount++;
+                    }
+                    else 
+                    {
+                        std::cout << "error not enough param\n";
+                        return;
+                    }
+                }
+                else if (modes[i] == "-k")
+                    minuskModeParam(currChannel, modes[i]);
             }
             else if (modes[i] == "+l" || modes[i] == "-l")
             {
-                lModeParam(currChannel, parameters[paramCount], modes[i]);
                 if (modes[i] == "+l")
-                    paramCount++;
+                {
+                    std::cout << "paramCount: " << paramCount << std::endl;
+                    std::cout << "param size(): " << parameters.size() << std::endl;
+                    if (parameters.size() > paramCount) // TODO
+                    {
+                        pluslModeParam(currChannel, parameters[paramCount], modes[i]);
+                        paramCount++;
+                    }
+                    else 
+                    {
+                        std::cout << "error not enough param\n";
+                        return;
+                    }
+                }
+                else if (modes[i] == "-l")
+                    minuslModeParam(currChannel, modes[i]);
             }
             else if (modes[i] == "+t" || modes[i] == "-t")
             {
