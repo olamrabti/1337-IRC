@@ -24,7 +24,18 @@ void Server::joinCommand(std::string channelName, std::string key, int client_fd
             std::cout << "Key is incorrect" << std::endl;
             return;
         }
-        // if (currChannel.isInviteOnly()) // TODO
+
+        if (currChannel.getInviteOnly() == true)
+        {
+            std::set<std::string>::iterator it_invited;
+            it_invited = currChannel.getInvited().find(currClient.getNickname());
+            if (it_invited == currChannel.getInvited().end())
+            {
+                std::cout << "Error: channel is invit only and you are not invited \n";
+                return;
+            }
+        }
+
         if (currChannel.getUserLimit() != 0 && currChannel.getUserCount() >= currChannel.getUserLimit())
         {
             std::cout << "Error: channel " << channelName << " is full" << std::endl;

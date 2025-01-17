@@ -35,6 +35,7 @@ public:
     bool getInviteOnly(void) const;
     bool getTopicLock(void) const;
     std::set<std::string> getOperators(void) const;
+    std::set<std::string> getInvited(void) const;
 
     // // Setters
     void setTopic(const std::string &topic);

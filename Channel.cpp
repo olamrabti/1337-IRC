@@ -202,6 +202,11 @@ std::set<std::string> Channel::getOperators(void) const
 	return _operators;
 }
 
+std::set<std::string> Channel::getInvited(void) const
+{
+	return _invited;
+}
+
 void Channel::addOperator(const std::string &nickname)
 {
 	_operators.insert(nickname); // TODO : Check if this is correct

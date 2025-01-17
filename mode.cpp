@@ -144,8 +144,6 @@ void Server::channelMode(int client_fd, std::vector<std::string> command)
         return;
     }
     std::vector<std::string> parameters = parseParametres(command);
-    for (auto mode : modes)
-        std::cout << "|mode|: " << mode << std::endl;
 
     std::map<std::string, Channel>::iterator it;
     it = _channels.find(channelName);
@@ -169,7 +167,7 @@ void Server::channelMode(int client_fd, std::vector<std::string> command)
         {
             if (modes[i] == "+o" || modes[i] == "-o")
             {
-                if (parameters.size() > paramCount) // TODO
+                if (parameters.size() > paramCount)
                 {
                     oModeParam(currChannel, parameters[paramCount], modes[i]);
                     paramCount++;
@@ -188,7 +186,7 @@ void Server::channelMode(int client_fd, std::vector<std::string> command)
             {
                 if (modes[i] == "+k")
                 {
-                    if (parameters.size() > paramCount) // TODO
+                    if (parameters.size() > paramCount)
                     {
                         pluskModeParam(currChannel, parameters[paramCount], modes[i]);
                         paramCount++;
@@ -206,9 +204,7 @@ void Server::channelMode(int client_fd, std::vector<std::string> command)
             {
                 if (modes[i] == "+l")
                 {
-                    std::cout << "paramCount: " << paramCount << std::endl;
-                    std::cout << "param size(): " << parameters.size() << std::endl;
-                    if (parameters.size() > paramCount) // TODO
+                    if (parameters.size() > paramCount)
                     {
                         pluslModeParam(currChannel, parameters[paramCount], modes[i]);
                         paramCount++;

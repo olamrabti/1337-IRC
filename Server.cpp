@@ -142,3 +142,9 @@ void Server::handleClientRequest(int client_fd)
         // }
     }
 }
+
+void Server::sendReply(int client_fd, const std::string& code, const std::string& message)
+{
+    std::string reply = code + " " + message + "\r\n";
+    send(client_fd, reply.c_str(), reply.size(), 0);
+}

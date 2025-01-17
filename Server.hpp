@@ -56,6 +56,8 @@ public:
     void NickCommand(int client_fd, std::vector<std::string> command);
     void UserCommand(int client_fd, std::vector<std::string> command);
 
+    void sendReply(int client_fd, const std::string& code, const std::string& message);
+
 };
 
 #endif
