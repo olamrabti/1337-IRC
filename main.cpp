@@ -1,5 +1,6 @@
 
 #include "Server.hpp"
+#include <csignal>
 
 std::pair<int, std::string> parse_args(char **av)
 {
@@ -39,6 +40,7 @@ std::pair<int, std::string> parse_args(char **av)
 
 int main(int ac, char **av)
 {
+
     if (ac != 3)
     {
         std::cerr << "Usage: ./ircserv <port> <password>" << std::endl;
@@ -58,5 +60,6 @@ int main(int ac, char **av)
         return 1;
     }
 
+    std::cout << " done " << std::endl;
     return 0;
 }

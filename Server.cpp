@@ -1,9 +1,30 @@
 #include "Server.hpp"
 
 #include <sstream> // TODO might be removed !
+#include <csignal>
 
 Server::Server(int port, std::string password) : _server_fd(-1), _port(port), _password(password), _client_count(1) {}
 
+Server::~Server()
+{
+    cleanup();
+    std::cerr << "distr called" << std::endl;
+}
+void Server::cleanup()
+{
+    std::cout << "Cleaning up server resources..." << std::endl;
+
+    for (int i = 1; i < _client_count; i++)
+        removeClient(fds[i].fd);
+
+    if (_server_fd != -1)
+    {
+        close(_server_fd);
+        std::cout << "Closed server socket." << std::endl;
+    }
+
+    _clients.clear();
+}
 void Server::run()
 {
     startServer();
@@ -23,6 +44,7 @@ void Server::run()
                 handleClientRequest(fds[i].fd);
         }
     }
+    // TODO handle ctrl c
 }
 
 void Server::startServer()
@@ -76,13 +98,13 @@ void Server::handleNewClient()
 
 void Server::handleClientRequest(int client_fd)
 {
-    char buffer[1024];
+    char buffer[512];
     int bytes_read = recv(client_fd, buffer, 1024, 0);
 
     if (bytes_read == 0)
     {
         std::cout << "Client disconnected." << std::endl;
-        this->removeClient(client_fd);
+        removeClient(client_fd);
         return;
     }
     else if (bytes_read < 0)
@@ -134,7 +156,7 @@ void Server::handleClientRequest(int client_fd)
     }
 }
 
-void    sendReply(int client_fd, std::string response)
+void sendReply(int client_fd, std::string response)
 {
     std::string message = response;
     if (send(client_fd, message.c_str(), message.length(), 0) <= 0)

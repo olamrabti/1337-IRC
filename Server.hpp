@@ -29,21 +29,22 @@ class Server
 private:
     int _server_fd;
     int _port;
-     std::string _password;
+    std::string _password;
     int _client_count;
     struct pollfd fds[FD_SETSIZE];
-    std::map<int, Client> _clients; // Client TODO 
+    std::map<int, Client> _clients; // Client TODO
     std::map<std::string, Channel> _channels;
 
 public:
     Server(int port, std::string password);
-
+    ~Server();
     void run();
     void startServer();
     void handleNewClient();
     void handleClientRequest(int client_fd);
     void removeClient(int client_fd);
-    
+    void cleanup();
+
     // pp:
     void ChannelJoin(int client_fd, std::vector<std::string> command);
     void joinCommand(std::string channelName, std::string key, int client_fd);
@@ -52,14 +53,12 @@ public:
     void channelKick(int client_fd, std::vector<std::string> command);
     void channelInvite(int client_fd, std::vector<std::string> command);
 
-    // salmane 
+    // salmane
     void PassCommand(int client_fd, std::vector<std::string> command);
     void NickCommand(int client_fd, std::vector<std::string> command);
     void UserCommand(int client_fd, std::vector<std::string> command);
-
-
 };
 
-void    sendReply(int client_fd, std::string response);
+void sendReply(int client_fd, std::string response);
 
 #endif
