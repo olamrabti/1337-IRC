@@ -1,9 +1,10 @@
 #include "Channel.hpp"
+#include "Server.hpp"
 #include <sstream>
 
 Channel::Channel(void) {}
 
-bool Channel::isValidChannelName(const std::string &name) const
+bool	isValidChannelName(const std::string &name)
 {
 	if (name.empty() || (name[0] != '#' && name[0] != '&'))
 		return false;
@@ -14,15 +15,12 @@ bool Channel::isValidChannelName(const std::string &name) const
 
 Channel::Channel(const std::string &name, const std::string &key)
 {
-	if (!isValidChannelName(name)) // Ensure the name conforms to IRC rules
-		throw std::invalid_argument("Invalid channel name");
-
 	_name = name;
-	_topic = "";		 // Default topic is unset
-	_key = key;			 // Set the provided key (empty for no key)
-	_userLimit = 0;		 // No user limit by default
-	_inviteOnly = false; // Channel is open to all
-	_topicLock = false;	 // Topic can be modified by anyone
+	_topic = "";
+	_key = key;
+	_userLimit = 0;
+	_inviteOnly = false;
+	_topicLock = false;
 }
 
 Channel::~Channel(void) {}
@@ -202,6 +200,11 @@ std::set<std::string> Channel::getOperators(void) const
 	return _operators;
 }
 
+std::set<std::string> Channel::getInvited(void) const
+{
+	return _invited;
+}
+
 void Channel::addOperator(const std::string &nickname)
 {
 	_operators.insert(nickname); // TODO : Check if this is correct
@@ -211,14 +214,8 @@ void Channel::removeOperator(const std::string &nickname)
 {
 	std::set<std::string>::iterator it;
 	it = _operators.find(nickname);
-	if (it == _operators.end())
-	{
-		std::cout << "Error: " << nickname << " is not an operator in channel " << _name << std::endl;
-	}
-	else
-	{
+	if (it != _operators.end())
 		_operators.erase(it);
-	}
 }
 
 void Channel::addInvited(const std::string &nickname)

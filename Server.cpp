@@ -82,7 +82,7 @@ void Server::handleClientRequest(int client_fd)
     if (bytes_read == 0)
     {
         std::cout << "Client disconnected." << std::endl;
-        removeClient(client_fd);
+        this->removeClient(client_fd);
         return;
     }
     else if (bytes_read < 0)
@@ -91,7 +91,7 @@ void Server::handleClientRequest(int client_fd)
             std::cout << "another connection from same terminal" << std::endl;
         else
         {
-            removeClient(client_fd);
+            this->removeClient(client_fd);
             throw std::runtime_error("Error receiving data from client");
         }
     }
@@ -107,37 +107,39 @@ void Server::handleClientRequest(int client_fd)
 
         Client &currClient = _clients[client_fd];
 
+        currClient.setNickFlag(0);
         if (command[0] == "PASS")
-        {
             PassCommand(client_fd, command);
-            currClient.setAuthStatus(0x01);
-        }
-        else if (command[0] == "NICK")
-        {
+        else if (command[0] == "NICK" && currClient.getAuthStatus() != 0x07)
             NickCommand(client_fd, command);
-            currClient.setAuthStatus(0x02);
-        }
         else if (command[0] == "USER")
-        {
             UserCommand(client_fd, command);
-            currClient.setAuthStatus(0x04);
-        }
         else if (currClient.isFullyAuthenticated())
         {
             if (command[0] == "JOIN")
                 ChannelJoin(client_fd, command);
-            else if (command[0] == "MODE") // TODO
+            else if (command[0] == "MODE")
                 channelMode(client_fd, command);
             else if (command[0] == "KICK")
-                channelKick(client_fd, command); // TODO to be tested when NICK is implemented
+                channelKick(client_fd, command);
             else if (command[0] == "TOPIC")
                 channelTopic(client_fd, command);
-            else if (command[0] == "INVITE") // TODO
+            else if (command[0] == "INVITE")
                 channelInvite(client_fd, command);
+            else if (command[0] == "NICK")
+                NickCommand(client_fd, command);
         }
-        else
-        {
-            std::cout << "Error: Client must be authenticated (PASS, NICK, USER) before any other command" << std::endl;
-        }
+
+        // else
+        // {
+        //     std::cout << "Error: Client must be authenticated (PASS, NICK, USER) before any other command" << std::endl;
+        // }
     }
+}
+
+void    sendReply(int client_fd, std::string response)
+{
+    std::string message = response;
+    if (send(client_fd, message.c_str(), message.length(), 0) <= 0)
+        std::cerr << "send() failed" << std::endl;
 }
