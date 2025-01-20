@@ -128,6 +128,8 @@ void Server::handleClientRequest(int client_fd)
                 channelInvite(client_fd, command);
             else if (command[0] == "NICK")
                 NickCommand(client_fd, command);
+            else if (command[0] == "SECBOT")
+                BotCommand(client_fd, command);
         }
 
         // else

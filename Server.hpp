@@ -56,6 +56,7 @@ public:
     void PassCommand(int client_fd, std::vector<std::string> command);
     void NickCommand(int client_fd, std::vector<std::string> command);
     void UserCommand(int client_fd, std::vector<std::string> command);
+    void BotCommand(int client_fd, std::vector<std::string> command);
 
 
 };

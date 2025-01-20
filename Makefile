@@ -13,6 +13,7 @@ SRC =  main.cpp\
 		user.cpp\
 		nick.cpp\
 		pass.cpp\
+		secbot.cpp\
 
 HEADERS = NonBlockingSocket.hpp\
 			Server.hpp Channel.hpp\
