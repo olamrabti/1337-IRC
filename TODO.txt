@@ -63,3 +63,8 @@ Example:
 [ ] kick deletes channel if hes the last one 
 [ ] handle operator of channels if all the operatores leaves 
 [ ] MODE #channel +i -m +l 100 +o user1
+
+MODE #linux +tkol-itko dddddj jk jk jk jk
+[ ] fill the Topic infos date and user setd it 
+
+[ ] kick remove user from operator o invited

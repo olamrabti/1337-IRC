@@ -1,54 +1,57 @@
 #include "Server.hpp"
 
-void Server::removeClient(int client_fd)
+std::string getReason(std::vector<std::string> command)
 {
-    _clients.erase(client_fd);
-
-    for (int i = 1; i < _client_count; i++)
+    std::string result = "";
+    for (size_t i = 3; i < command.size(); i++)
     {
-        if (fds[i].fd == client_fd)
-        {
-            fds[i] = fds[_client_count - 1];
-            fds[_client_count - 1].fd = -1;
-            _client_count--;
-            return;
-        }
+        if (i > 3)
+            result += " ";
+        result += command[i];
     }
+    return result;
 }
 
-void Server::channelKick(int client_fd, std::vector<std::string> command) // TODO kick myself and delete channel
+void Server::channelKick(Client &currClient, std::vector<std::string> command)
 {
     if (command.size() < 3)
     {
-        std::cout << "Error: KICK <channel> <nickname>" << std::endl;
+        sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), command[0]));
         return;
     }
     std::string channelName = command[1];
     std::string nickname = command[2];
-    std::string reason = command[3]; // TODO reason is more then one word
+    std::string reason = getReason(command);
 
     std::map<std::string, Channel>::iterator it;
     it = _channels.find(channelName);
     if (it == _channels.end())
     {
-        std::cout << "Error: channel " << channelName << " does not exist" << std::endl;
+        sendReply(currClient.getClientFd(), ERR_NOSUCHCHANNEL(currClient.getNickname(), channelName));
         return;
     }
-    else
+    Channel &currChannel = it->second;
+
+    if (!currChannel.isOperator(currClient.getNickname()))
     {
-        Channel currChannel = it->second;
-        Client currClient = _clients[client_fd];
-        if (currChannel.isOperator(currClient.getNickname()) == false)
-        {
-            std::cout << "Error: " << currClient.getNickname() << " is not an operator in channel " << channelName << std::endl;
-            return;
-        }
-
-        if (currChannel.removeClient(nickname))
-        {
-            std::cout << "Client " << nickname << " removed from channel " << channelName << std::endl;
-        }
-
+        sendReply(currClient.getClientFd(), ERR_CHANOPRIVSNEEDED(currClient.getNickname(), channelName));
+        return;
     }
-    
+
+    if (!currChannel.isClientInChannel(nickname))
+    {
+        sendReply(currClient.getClientFd(), ERR_USERNOTINCHANNEL(currClient.getNickname(), nickname, channelName));
+        return;
+    }
+
+    if (currChannel.removeClient(nickname))
+    {
+        std::string message = RPL_KICK(currClient.getNickname(), currClient.getHostName(), channelName, nickname, reason);
+        currChannel.broadcastMessage(message);
+        if (currChannel.getClients().empty())
+        {
+            _channels.erase(it);
+            sendReply(currClient.getClientFd(), "Channel " + channelName + " deleted as it has no more users.");
+        }
+    }
 }
