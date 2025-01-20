@@ -1,15 +1,30 @@
 #include "Server.hpp"
-
 #include <sstream> // TODO might be removed !
-#include <csignal>
 
 Server::Server(int port, std::string password) : _server_fd(-1), _port(port), _password(password), _client_count(1) {}
 
 Server::~Server()
 {
     cleanup();
-    std::cerr << "distr called" << std::endl;
 }
+
+void Server::removeClient(int client_fd)
+{
+    close(client_fd);
+    _clients.erase(client_fd);
+
+    for (int i = 1; i < _client_count; i++)
+    {
+        if (fds[i].fd == client_fd)
+        {
+            fds[i] = fds[_client_count - 1];
+            fds[_client_count - 1].fd = -1;
+            _client_count--;
+            return;
+        }
+    }
+}
+
 void Server::cleanup()
 {
     std::cout << "Cleaning up server resources..." << std::endl;
@@ -20,11 +35,12 @@ void Server::cleanup()
     if (_server_fd != -1)
     {
         close(_server_fd);
-        std::cout << "Closed server socket." << std::endl;
+        std::cout << "Closed server socket." << std::endl; // TODO 
     }
 
     _clients.clear();
 }
+
 void Server::run()
 {
     startServer();
@@ -44,7 +60,6 @@ void Server::run()
                 handleClientRequest(fds[i].fd);
         }
     }
-    // TODO handle ctrl c
 }
 
 void Server::startServer()
@@ -83,6 +98,11 @@ void Server::handleNewClient()
     if (client_fd < 0)
         throw std::runtime_error("Failed to accept client");
 
+    Client newClient(client_fd);
+    std::cout << "instance new client fd: " << newClient.getClientFd() << std::endl;
+    _clients[client_fd] = newClient;
+    std::cout << "instance new client from the map: " << _clients[client_fd].getClientFd() << std::endl;
+
     NonBlockingSocket client_socket(client_fd);
     fds[_client_count].fd = client_fd;
     fds[_client_count].events = POLLIN;
@@ -90,7 +110,7 @@ void Server::handleNewClient()
     // TODO might be removed !
     std::ostringstream client_id;
     client_id << client_fd;
-    _clients[client_fd] = "client " + client_id.str();
+    // _clients[client_fd] = "client " + client_id.str();
 
     _client_count++;
     std::cout << "New client connected!" << std::endl;
@@ -98,13 +118,13 @@ void Server::handleNewClient()
 
 void Server::handleClientRequest(int client_fd)
 {
-    char buffer[512];
+    char buffer[1024];
     int bytes_read = recv(client_fd, buffer, 1024, 0);
 
     if (bytes_read == 0)
     {
         std::cout << "Client disconnected." << std::endl;
-        removeClient(client_fd);
+        this->removeClient(client_fd);
         return;
     }
     else if (bytes_read < 0)
@@ -122,7 +142,6 @@ void Server::handleClientRequest(int client_fd)
         buffer[bytes_read] = '\0';
         std::string message(buffer);
         std::cout << "Received: " << message;
-        // Handle commands
         std::vector<std::string> command = split(trimString(message), ' ');
         if (command.empty())
             return;
@@ -130,37 +149,31 @@ void Server::handleClientRequest(int client_fd)
         Client &currClient = _clients[client_fd];
 
         if (command[0] == "PASS")
-            PassCommand(client_fd, command);
-        else if (command[0] == "NICK") // TODO  NICK should be before USER
+            PassCommand(client_fd, command); // TODO currClient here instead of client_fd
+        else if (command[0] == "NICK")
             NickCommand(client_fd, command);
         else if (command[0] == "USER")
             UserCommand(client_fd, command);
         if (currClient.isFullyAuthenticated())
         {
             if (command[0] == "JOIN")
-                ChannelJoin(client_fd, command);
+                ChannelJoin(currClient, command);
             else if (command[0] == "MODE")
-                channelMode(client_fd, command);
+                channelMode(currClient, command);
             else if (command[0] == "KICK")
-                channelKick(client_fd, command);
+                channelKick(currClient, command);
             else if (command[0] == "TOPIC")
-                channelTopic(client_fd, command);
+                channelTopic(currClient, command);
             else if (command[0] == "INVITE")
-                channelInvite(client_fd, command);
+                channelInvite(currClient, command);
             else if (command[0] == "PRIVMSG")
-                PrivMsgCommand(client_fd, command, message); // TODO here the msg might be modified because of splitting by space, ex : in case of multiple consecutive spaces, maybe i should pass buffer as it is.
+                PrivMsgCommand(client_fd, command, message);
         }
-
-        // else
-        // {
-        //     std::cout << "Error: Client must be authenticated (PASS, NICK, USER) before any other command" << std::endl;
-        // }
     }
 }
 
-void sendReply(int client_fd, std::string response)
+void    sendReply(int client_fd, std::string response)
 {
-    std::string message = response;
-    if (send(client_fd, message.c_str(), message.length(), 0) <= 0)
-        std::cerr << "send() failed" << std::endl;
+    if (send(client_fd, response.c_str(), response.length(), 0) == -1)
+        std::cerr << "Error: send() failed" << std::endl;
 }

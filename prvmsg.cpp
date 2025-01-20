@@ -27,7 +27,7 @@ void Server::broadcastToChannel(const std::string &channel_name, const std::stri
         {
             if (client_it->first != sender)
             {
-                std::string formatted_msg = ":" + sender + " PRIVMSG " + channel_name + " :" + message + "\r\n";
+                std::string formatted_msg = ":" + sender + " PRIVMSG " + channel_name + " :" + message;
                 send(client_it->second.getClientFd(), formatted_msg.c_str(), formatted_msg.size(), 0);
             }
         }
@@ -44,7 +44,7 @@ void Server::sendToClient(const std::string &target_nick, const std::string &sen
     int target_fd = getClientByNickname(target_nick);
     if (target_fd != -1)
     {
-        std::string formatted_msg = ":" + sender_nick + " PRIVMSG " + target_nick + " :" + message + "\r\n";
+        std::string formatted_msg = ":" + sender_nick + " PRIVMSG " + target_nick + " :" + message;
         send(target_fd, formatted_msg.c_str(), formatted_msg.size(), 0);
     }
     else

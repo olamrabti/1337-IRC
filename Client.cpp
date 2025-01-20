@@ -4,27 +4,22 @@ Client::Client(void) : _authStatus(0) {}
 
 Client::Client(std::string nickname) : _nickname(nickname), _authStatus(0) {}
 
+Client::Client(int fd)
+{
+    _client_fd = fd;
+    _authStatus = 0;
+    _nickname = "";
+    _username = "";
+}
+
 Client::~Client(void) {}
 
-Client &Client::operator = (Client const &other)
-{
-	return (*this);
-}
 
 const std::string &Client::getNickname(void) const
 {
 	return _nickname;
 }
 
-// void Client::setPassword(const std::string &password)
-// {
-//     _password = password;
-// }
-
-// const std::string &Client::getPassword() const
-// {
-//     return _password;
-// }
 
 bool Client::isRegistered() const
 {
@@ -99,4 +94,9 @@ int Client::getClientFd(void) const
 void Client::setClientFd(int fd)
 {
     this->_client_fd = fd;
+}
+
+std::string Client::getPrefix() const
+{
+    return _nickname + "!" + _username + "@" + _hostname;
 }

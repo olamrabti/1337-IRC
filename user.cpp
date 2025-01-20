@@ -3,8 +3,8 @@
 void Server::UserCommand(int client_fd, std::vector<std::string> command)
 {
     Client &currClient = _clients[client_fd];
-    if (currClient.getAuthStatus() != 0x01 && currClient.getAuthStatus() != 0x03)
-        return;
+    // if (currClient.getAuthStatus() != 0x01 && currClient.getAuthStatus() != 0x03)
+    //     return;
 
     if (command.size() < 5)
     {

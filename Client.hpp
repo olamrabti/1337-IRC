@@ -18,15 +18,17 @@ class Client
 	public :
 		Client(void);
 		Client(std::string nickname);
+		Client(int fd);
 		~Client(void);
-		Client &operator = (Client const &other);
+
+
 		int getClientFd(void) const;
 		void setClientFd(int fd);
 		std::string getHostName(void);
 		std::string getRealName(void);
 		std::string getServerName(void);
 		const std::string &getNickname(void) const;
-		void setPassword(const std::string &password);
+
 		const std::string &getPassword() const;
 		bool isRegistered() const;
 		void setRegistered(bool registered);
@@ -38,6 +40,8 @@ class Client
 		void setAuthStatus(int status);
 		int getAuthStatus() const;
 		bool isFullyAuthenticated() const;
+
+		std::string getPrefix(void) const;
 };
 
 bool	isValidChannelName(const std::string &name);

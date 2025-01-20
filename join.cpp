@@ -1,71 +1,94 @@
 #include "Server.hpp"
 #include "numericReplies.hpp"
 
-void Server::joinCommand(std::string channelName, std::string key, int client_fd)
+void Server::joinCommand(std::string channelName, std::string key, Client& currClient)
 {
-    Client currClient = _clients[client_fd];
-	std::map<std::string, Channel>::iterator it;
+    int client_fd = currClient.getClientFd();
+    std::map<std::string, Channel>::iterator it;
     it = _channels.find(channelName);
     if (it == _channels.end())
     {
         if (!isValidChannelName(channelName))
         {
-		    // sendReply(client_fd, ERR_BADCHANMASK, channelName + " :Invalid channel name");
-            return ;
+            sendReply(client_fd, ERR_NOSUCHCHANNEL(currClient.getNickname(), channelName));
+            return;
         }
         Channel newChannel(channelName, key);
         newChannel.addClient(currClient);
         newChannel.addOperator(currClient.getNickname());
+
         _channels[channelName] = newChannel;
-        // sendReply(client_fd, RPL_TOPIC, channelName + " :" + newChannel.getTopic());
-        // std::cout << "Channel " << channelName << " created" << std::endl;
+        sendReply(client_fd, RPL_NOTIFYJOIN(currClient.getNickname(), currClient.getHostName(), channelName));
+        if (newChannel.getTopic() == "")
+            sendReply(client_fd, RPL_NOTOPIC(currClient.getNickname(), channelName));
+        else
+        {
+            sendReply(client_fd, RPL_TOPIC(currClient.getNickname(), channelName, newChannel.getTopic()));
+            sendReply(client_fd, RPL_TOPICWHOTIME(currClient.getNickname(), channelName, newChannel.getTopicSetter(), newChannel.getTopicDdate()));
+        }
+        sendReply(client_fd, RPL_NAMREPLY(currClient.getNickname(), channelName, newChannel.getAllUsersNames()));
+        sendReply(client_fd, RPL_ENDOFNAMES(currClient.getNickname(), channelName));
     }
     else
     {
-        // std::cout << "Channel " << channelName << " already exists" << std::endl;
-        Channel currChannel = it->second;
-        if (currChannel.getInviteOnly() && !currChannel.isInvited(currClient.getNickname())) {
-            // sendReply(client_fd, ERR_INVITEONLYCHAN, channelName + " :Cannot join channel (+i)");
+        Channel &currChannel = it->second;
+        if (currChannel.getInviteOnly() && !currChannel.isInvited(currClient.getNickname()))
+        {
+            sendReply(client_fd, ERR_INVITEONLYCHAN(currClient.getNickname(), channelName));
             return;
         }
 
         if (currChannel.getUserLimit() != 0 && currChannel.getUserCount() >= currChannel.getUserLimit())
         {
-            // sendReply(client_fd, ERR_CHANNELISFULL, channelName + " :Cannot join channel (+l)");
+            sendReply(client_fd, ERR_CHANNELISFULL(currClient.getNickname(), channelName));
             return;
         }
 
-        if (currChannel.getKey() != key) {
-            // sendReply(client_fd, ERR_BADCHANNELKEY, channelName + " :Cannot join channel (+k)");
+        if (currChannel.getKey() != key)
+        {
+            sendReply(client_fd, ERR_INVALIDKEY(currClient.getNickname(), channelName));
             return;
         }
 
-        if (currChannel.getClients().find(currClient.getNickname()) != currChannel.getClients().end()) {
-            // sendReply(client_fd, "NOTICE", ":You are already in the channel");
+        if (currChannel.getClients().find(currClient.getNickname()) != currChannel.getClients().end())
+        {
+            sendReply(client_fd, ERR_USERONCHANNEL(currClient.getNickname(), currClient.getNickname(), channelName));
             return;
         }
 
         currChannel.addClient(currClient);
-        sendReply(client_fd, "");
+        std::string message = RPL_NOTIFYJOIN(currClient.getNickname(), currClient.getHostName(), channelName);
+        sendReply(client_fd, message);
+        currChannel.broadcastMessage(message);
+        if (currChannel.getTopic() == "")
+            sendReply(client_fd, RPL_NOTOPIC(currClient.getNickname(), channelName));
+        else
+        {
+            sendReply(client_fd, RPL_TOPIC(currClient.getNickname(), channelName, currChannel.getTopic()));
+            sendReply(client_fd, RPL_TOPICWHOTIME(currClient.getNickname(), channelName, currChannel.getTopicSetter(), currChannel.getTopicDdate()));
+        }
+        sendReply(client_fd, RPL_NAMREPLY(currClient.getNickname(), channelName, currChannel.getAllUsersNames()));
+        sendReply(client_fd, RPL_ENDOFNAMES(currClient.getNickname(), channelName));
     }
 }
 
-
-void Server::ChannelJoin(int client_fd, std::vector<std::string> command)
+void Server::ChannelJoin(Client& currClient, std::vector<std::string> command)
 {
-    std::cout << "mre7ba \n";
     if (command.size() < 2)
     {
-        sendReply(client_fd , ERR_NEEDMOREPARAMS(_clients[client_fd].getNickname(), command[0]));
+        sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), command[0]));
         return;
     }
-	std::map<std::string, std::string> tokens = parseJoinCommand(command);
+    std::map<std::string, std::string> tokens = parseJoinCommand(command);
     if (tokens.size() == 0)
     {
-        std::cout << "Error: invalid JOIN command" << std::endl;
+        sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), command[0]));
         return;
     }
-	std::map<std::string, std::string>::iterator it;
-	for (it = tokens.begin(); it != tokens.end(); it++)
-		joinCommand(it->first, it->second, client_fd);
+
+    std::map<std::string, std::string>::iterator it;
+    for (it = tokens.begin(); it != tokens.end(); it++)
+    {
+        joinCommand(it->first, it->second, currClient);
+    }
 }
