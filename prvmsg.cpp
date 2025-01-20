@@ -17,6 +17,43 @@ int Server::getClientByNickname(const std::string &nickname) const
     return -1;
 }
 
+void Server::broadcastToChannel(const std::string &channel_name, const std::string &sender, const std::string &message)
+{
+    std::map<std::string, Channel>::iterator channel_it = _channels.find(channel_name);
+    if (channel_it != _channels.end())
+    {
+        std::map<std::string, Client> &clients_in_channel = channel_it->second.getClients();
+        for (std::map<std::string, Client>::iterator client_it = clients_in_channel.begin(); client_it != clients_in_channel.end(); ++client_it)
+        {
+            if (client_it->first != sender)
+            {
+                std::string formatted_msg = ":" + sender + " PRIVMSG " + channel_name + " :" + message + "\r\n";
+                send(client_it->second.getClientFd(), formatted_msg.c_str(), formatted_msg.size(), 0);
+            }
+        }
+    }
+    else
+    {
+        std::cerr << "No such Channel: " << channel_name << std::endl;
+        // Send error reply: No such channel
+    }
+}
+
+void Server::sendToClient(const std::string &target_nick, const std::string &sender_nick, const std::string &message)
+{
+    int target_fd = getClientByNickname(target_nick);
+    if (target_fd != -1)
+    {
+        std::string formatted_msg = ":" + sender_nick + " PRIVMSG " + target_nick + " :" + message + "\r\n";
+        send(target_fd, formatted_msg.c_str(), formatted_msg.size(), 0);
+    }
+    else
+    {
+        std::cerr << "No such User: " << target_nick << std::endl;
+        // Send error reply: No such nick/channel
+    }
+}
+
 void Server::PrivMsgCommand(int client_fd, std::vector<std::string> command)
 {
     std::cerr << "prv message " << std::endl;
@@ -40,41 +77,15 @@ void Server::PrivMsgCommand(int client_fd, std::vector<std::string> command)
             message += " ";
     }
 
-    if (target[0] == '#')
-    {
-        std::map<std::string, Channel>::iterator channel_it = _channels.find(target);
-        if (channel_it != _channels.end())
-        {
-            std::map<std::string, Client> &clients_in_channel = channel_it->second.getClients();
-            std::string sender_nick = _clients[client_fd].getNickname();
+    std::string sender_nick = _clients[client_fd].getNickname();
+    std::vector<std::string> target_list = split(target, ',');
 
-            for (std::map<std::string, Client>::iterator client_it = clients_in_channel.begin(); client_it != clients_in_channel.end(); ++client_it)
-            {
-                if (client_it->first != sender_nick)
-                {
-                    std::string formatted_msg = ":" + sender_nick + " PRIVMSG " + target + " :" + message + "\r\n";
-                    send(client_it->second.getClientFd(), formatted_msg.c_str(), formatted_msg.size(), 0);
-                }
-            }
-        }
-        else
-        {
-            std::cerr << "No such Channel : " << channel_it->second.getName() << std::endl;
-            // TODO Send error reply: No such channel
-        }
-    }
-    else
+    for (size_t i = 0; i < target_list.size(); ++i)
     {
-        int target_fd = getClientByNickname(target);
-        if (target_fd != -1)
-        {
-            std::string formatted_msg = ":" + _clients[client_fd].getNickname() + " PRIVMSG " + target + " :" + message + "\r\n";
-            send(target_fd, formatted_msg.c_str(), formatted_msg.size(), 0);
-        }
+        std::string target = target_list[i];
+        if (target[0] == '#')
+            broadcastToChannel(target, sender_nick, message);
         else
-        {
-            // TODO numerical response of this shit should be sent
-            std::cerr << "NO such USER : " << target << std::endl;
-        }
+            sendToClient(target, sender_nick, message);
     }
 }

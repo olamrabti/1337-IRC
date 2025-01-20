@@ -45,6 +45,8 @@ public:
     void removeClient(int client_fd);
     void cleanup();
     int getClientByNickname(const std::string &nickname) const;
+    void broadcastToChannel(const std::string &channel_name, const std::string &sender, const std::string &message);
+    void sendToClient(const std::string &target_nick, const std::string &sender_nick, const std::string &message);
 
     // pp:
     void ChannelJoin(int client_fd, std::vector<std::string> command);
