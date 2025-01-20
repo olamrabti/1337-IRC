@@ -54,7 +54,7 @@ void Server::sendToClient(const std::string &target_nick, const std::string &sen
     }
 }
 
-void Server::PrivMsgCommand(int client_fd, std::vector<std::string> command)
+void Server::PrivMsgCommand(int client_fd, std::vector<std::string> command, std::string &buffer)
 {
     std::cerr << "prv message " << std::endl;
     if (command.size() < 3)
@@ -65,17 +65,18 @@ void Server::PrivMsgCommand(int client_fd, std::vector<std::string> command)
     }
 
     std::string target = command[1];
+    std::string message = buffer.substr(buffer.find(':') + 1);
 
-    std::string message;
-    for (size_t i = 2; i < command.size(); ++i)
-    {
-        if (i == 2 && !command[i].empty() && command[i][0] == ':')
-            message += command[i].substr(1);
-        else
-            message += command[i];
-        if (i != command.size() - 1)
-            message += " ";
-    }
+    // std::string message;
+    // for (size_t i = 2; i < command.size(); ++i)
+    // {
+    //     if (i == 2 && !command[i].empty() && command[i][0] == ':')
+    //         message += command[i].substr(1);
+    //     else
+    //         message += command[i];
+    //     if (i != command.size() - 1)
+    //         message += " ";
+    // }
 
     std::string sender_nick = _clients[client_fd].getNickname();
     std::vector<std::string> target_list = split(target, ',');
