@@ -147,6 +147,8 @@ void Server::handleClientRequest(int client_fd)
                 channelTopic(client_fd, command);
             else if (command[0] == "INVITE")
                 channelInvite(client_fd, command);
+            else if (command[0] == "PRIVMSG")
+                PrivMsgCommand(client_fd, command); // TODO here the msg might be modified because of splitting by space, ex : in case of multiple consecutive spaces, maybe i should pass buffer as it is.
         }
 
         // else
