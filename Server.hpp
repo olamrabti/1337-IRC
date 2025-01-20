@@ -15,8 +15,6 @@
 #include <poll.h>
 #include <vector>
 #include <utility>
-#include <vector>
-#include <utility>
 #include "NonBlockingSocket.hpp"
 
 #include "Client.hpp"
@@ -32,11 +30,8 @@ private:
     int _server_fd;
     int _port;
     std::string _password;
-    std::string _password;
     int _client_count;
     struct pollfd fds[FD_SETSIZE];
-    std::map<int, Client> _clients; // Client TODO
-    std::map<std::string, Channel> _channels;
     std::map<int, Client> _clients; // Client TODO
     std::map<std::string, Channel> _channels;
 
