@@ -35,7 +35,7 @@ void Server::cleanup()
     if (_server_fd != -1)
     {
         close(_server_fd);
-        std::cout << "Closed server socket." << std::endl; // TODO 
+        std::cout << "Closed server socket." << std::endl; // TODO
     }
 
     _clients.clear();
@@ -108,6 +108,7 @@ void Server::handleNewClient()
     fds[_client_count].events = POLLIN;
 
     // TODO might be removed !
+    // TODO might be removed !
     std::ostringstream client_id;
     client_id << client_fd;
     // _clients[client_fd] = "client " + client_id.str();
@@ -122,57 +123,59 @@ void Server::handleClientRequest(int client_fd)
     int bytes_read = recv(client_fd, buffer, 1024, 0);
 
     if (bytes_read == 0)
-    {
-        std::cout << "Client disconnected." << std::endl;
-        this->removeClient(client_fd);
-        return;
-    }
-    else if (bytes_read < 0)
-    {
-        if (errno == EAGAIN || errno == EWOULDBLOCK)
-            std::cout << "another connection from same terminal" << std::endl;
+
+        if (bytes_read == 0)
+        {
+            std::cout << "Client disconnected." << std::endl;
+            this->removeClient(client_fd);
+            return;
+        }
+        else if (bytes_read < 0)
+        {
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
+                std::cout << "another connection from same terminal" << std::endl;
+            else
+            {
+                this->removeClient(client_fd);
+                throw std::runtime_error("Error receiving data from client");
+            }
+        }
         else
         {
-            this->removeClient(client_fd);
-            throw std::runtime_error("Error receiving data from client");
-        }
-    }
-    else
-    {
-        buffer[bytes_read] = '\0';
-        std::string message(buffer);
-        std::cout << "Received: " << message;
-        std::vector<std::string> command = split(trimString(message), ' ');
-        if (command.empty())
-            return;
+            buffer[bytes_read] = '\0';
+            std::string message(buffer);
+            std::cout << "Received: " << message;
+            std::vector<std::string> command = split(trimString(message), ' ');
+            if (command.empty())
+                return;
 
-        Client &currClient = _clients[client_fd];
+            Client &currClient = _clients[client_fd];
 
-        if (command[0] == "PASS")
-            PassCommand(client_fd, command); // TODO currClient here instead of client_fd
-        else if (command[0] == "NICK")
-            NickCommand(client_fd, command);
-        else if (command[0] == "USER")
-            UserCommand(client_fd, command);
-        if (currClient.isFullyAuthenticated())
-        {
-            if (command[0] == "JOIN")
-                ChannelJoin(currClient, command);
-            else if (command[0] == "MODE")
-                channelMode(currClient, command);
-            else if (command[0] == "KICK")
-                channelKick(currClient, command);
-            else if (command[0] == "TOPIC")
-                channelTopic(currClient, command);
-            else if (command[0] == "INVITE")
-                channelInvite(currClient, command);
-            else if (command[0] == "PRIVMSG")
-                PrivMsgCommand(client_fd, command, message);
+            if (command[0] == "PASS")
+                PassCommand(client_fd, command); // TODO currClient here instead of client_fd
+            else if (command[0] == "NICK")
+                NickCommand(client_fd, command);
+            else if (command[0] == "USER")
+                UserCommand(client_fd, command);
+            if (currClient.isFullyAuthenticated())
+            {
+                if (command[0] == "JOIN")
+                    ChannelJoin(currClient, command);
+                else if (command[0] == "MODE")
+                    channelMode(currClient, command);
+                else if (command[0] == "KICK")
+                    channelKick(currClient, command);
+                else if (command[0] == "TOPIC")
+                    channelTopic(currClient, command);
+                else if (command[0] == "INVITE")
+                    channelInvite(currClient, command);
+                else if (command[0] == "PRIVMSG")
+                    PrivMsgCommand(client_fd, command, message);
+            }
         }
-    }
 }
 
-void    sendReply(int client_fd, std::string response)
+void sendReply(int client_fd, std::string response)
 {
     if (send(client_fd, response.c_str(), response.length(), 0) == -1)
         std::cerr << "Error: send() failed" << std::endl;

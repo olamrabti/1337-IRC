@@ -245,7 +245,7 @@ void Channel::broadcastMessage(std::string message)
 {
 	for (std::map<std::string, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 	{
-		std::cout << " clients in channel: " << this->_name << " "  << it->second.getNickname() << std::endl;
+		std::cout << " clients in channel: " << this->_name << " " << it->second.getNickname() << std::endl;
 		sendReply(it->second.getClientFd(), message);
 	}
 }
@@ -303,4 +303,3 @@ bool Channel::isClientInChannel(std::string nickname)
 	}
 	return false;
 }
-

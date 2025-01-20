@@ -21,7 +21,8 @@ void Server::PassCommand(int client_fd, std::vector<std::string> command)
         std::cout << "Password set for client " << currClient.getNickname() << std::endl;
         currClient.setAuthStatus(0x01);
     }
-    else {
+    else
+    {
         std::cout << "Error : wrong pass\n";
     }
 }

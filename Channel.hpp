@@ -77,5 +77,4 @@ std::string trimString(const std::string &input);
 
 std::string getCurrTime(void);
 
-
 #endif

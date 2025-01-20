@@ -1,6 +1,6 @@
 #include "Server.hpp"
 
-void Server::channelTopic(Client& currClient, std::vector<std::string> command)
+void Server::channelTopic(Client &currClient, std::vector<std::string> command)
 {
     if (command.size() < 2)
     {
@@ -11,7 +11,6 @@ void Server::channelTopic(Client& currClient, std::vector<std::string> command)
     std::string channelName = command[1];
     std::string newTopic = (command.size() > 2) ? command[2] : "";
 
-
     std::map<std::string, Channel>::iterator it = _channels.find(channelName);
     if (it == _channels.end())
     {
@@ -19,7 +18,7 @@ void Server::channelTopic(Client& currClient, std::vector<std::string> command)
         return;
     }
 
-    Channel& currChannel = it->second;
+    Channel &currChannel = it->second;
 
     if (command.size() == 2)
     {
@@ -47,5 +46,4 @@ void Server::channelTopic(Client& currClient, std::vector<std::string> command)
 
     std::string message = RPL_TOPIC(currClient.getNickname(), channelName, newTopic);
     currChannel.broadcastMessage(message);
-
 }

@@ -14,12 +14,10 @@ Client::Client(int fd)
 
 Client::~Client(void) {}
 
-
 const std::string &Client::getNickname(void) const
 {
-	return _nickname;
+    return _nickname;
 }
-
 
 bool Client::isRegistered() const
 {

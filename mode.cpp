@@ -5,7 +5,7 @@ bool isValidMode(char c)
     return (c == 'i' || c == 't' || c == 'k' || c == 'o' || c == 'l');
 }
 
-std::vector<std::string> parseModes(const std::string &modes, Client& currClient)
+std::vector<std::string> parseModes(const std::string &modes, Client &currClient)
 {
     std::vector<std::string> result;
     bool give = true;
@@ -35,7 +35,7 @@ std::vector<std::string> parseParametres(std::vector<std::string> command)
     return result;
 }
 
-void oModeParam(Channel &currChannel, std::string parameter, std::string mode , Client& currClient , std::map<int, Client> _clients )
+void oModeParam(Channel &currChannel, std::string parameter, std::string mode, Client &currClient, std::map<int, Client> _clients)
 {
     if (parameter.empty())
     {
@@ -59,7 +59,6 @@ void oModeParam(Channel &currChannel, std::string parameter, std::string mode , 
         currChannel.addOperator(parameter);
         sendReply(currClient.getClientFd(), ":" + currClient.getPrefix() + " MODE " + currChannel.getName() + " +o " + parameter + "\r\n");
         // sendReply(currClient.getClientFd(), RPL_CHANNELMODEIS(currClient.getNickname(), currChannel.getName(), mode));
-
     }
     else if (mode == "-o")
     {
@@ -167,7 +166,7 @@ void tModeParam(Channel &currChannel, const std::string &mode, Client &currClien
     }
 }
 
-void Server::channelMode(Client& currClient, std::vector<std::string> command)
+void Server::channelMode(Client &currClient, std::vector<std::string> command)
 {
     if (command.size() < 3)
     {
@@ -198,7 +197,7 @@ void Server::channelMode(Client& currClient, std::vector<std::string> command)
 
         if (currChannel.isOperator(currClient.getNickname()) == false)
         {
-            sendReply(currClient. getClientFd(), ERR_CHANOPRIVSNEEDED(currClient.getNickname(), channelName));
+            sendReply(currClient.getClientFd(), ERR_CHANOPRIVSNEEDED(currClient.getNickname(), channelName));
             return;
         }
         int paramCount = 0;
@@ -211,7 +210,7 @@ void Server::channelMode(Client& currClient, std::vector<std::string> command)
                     oModeParam(currChannel, parameters[paramCount], modes[i], currClient, _clients);
                     paramCount++;
                 }
-                else 
+                else
                 {
                     sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), command[0]));
                     return;
@@ -230,7 +229,7 @@ void Server::channelMode(Client& currClient, std::vector<std::string> command)
                         pluskModeParam(currChannel, parameters[paramCount], modes[i], currClient);
                         paramCount++;
                     }
-                    else 
+                    else
                     {
                         sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), command[0]));
                         return;
@@ -248,7 +247,7 @@ void Server::channelMode(Client& currClient, std::vector<std::string> command)
                         pluslModeParam(currChannel, parameters[paramCount], modes[i], currClient);
                         paramCount++;
                     }
-                    else 
+                    else
                     {
                         sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), command[0]));
                         return;

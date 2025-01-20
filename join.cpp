@@ -1,7 +1,7 @@
 #include "Server.hpp"
 #include "numericReplies.hpp"
 
-void Server::joinCommand(std::string channelName, std::string key, Client& currClient)
+void Server::joinCommand(std::string channelName, std::string key, Client &currClient)
 {
     int client_fd = currClient.getClientFd();
     std::map<std::string, Channel>::iterator it;
@@ -72,7 +72,7 @@ void Server::joinCommand(std::string channelName, std::string key, Client& currC
     }
 }
 
-void Server::ChannelJoin(Client& currClient, std::vector<std::string> command)
+void Server::ChannelJoin(Client &currClient, std::vector<std::string> command)
 {
     if (command.size() < 2)
     {

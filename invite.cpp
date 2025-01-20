@@ -1,6 +1,6 @@
 #include "Server.hpp"
 
-void Server::channelInvite(Client& currClient, std::vector<std::string> command)
+void Server::channelInvite(Client &currClient, std::vector<std::string> command)
 {
     if (command.size() != 3)
     {
@@ -18,7 +18,7 @@ void Server::channelInvite(Client& currClient, std::vector<std::string> command)
         return;
     }
 
-    Channel& currChannel = it->second;
+    Channel &currChannel = it->second;
 
     if (!currChannel.isOperator(currClient.getNickname()))
     {
@@ -26,7 +26,7 @@ void Server::channelInvite(Client& currClient, std::vector<std::string> command)
         return;
     }
 
-    Client* targetClient = NULL;
+    Client *targetClient = NULL;
     for (std::map<int, Client>::iterator it_client = _clients.begin(); it_client != _clients.end(); ++it_client)
     {
         if (it_client->second.getNickname() == nickname)

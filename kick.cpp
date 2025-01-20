@@ -12,7 +12,7 @@ std::string getReason(std::vector<std::string> command)
     return result;
 }
 
-void Server::channelKick(Client& currClient, std::vector<std::string> command)
+void Server::channelKick(Client &currClient, std::vector<std::string> command)
 {
     if (command.size() < 3)
     {
@@ -30,7 +30,7 @@ void Server::channelKick(Client& currClient, std::vector<std::string> command)
         sendReply(currClient.getClientFd(), ERR_NOSUCHCHANNEL(currClient.getNickname(), channelName));
         return;
     }
-    Channel& currChannel = it->second;
+    Channel &currChannel = it->second;
 
     if (!currChannel.isOperator(currClient.getNickname()))
     {
@@ -46,7 +46,7 @@ void Server::channelKick(Client& currClient, std::vector<std::string> command)
 
     if (currChannel.removeClient(nickname))
     {
-        std::string message = RPL_KICK(currClient.getNickname(), currClient.getHostName(), channelName, nickname , reason);
+        std::string message = RPL_KICK(currClient.getNickname(), currClient.getHostName(), channelName, nickname, reason);
         currChannel.broadcastMessage(message);
         if (currChannel.getClients().empty())
         {
