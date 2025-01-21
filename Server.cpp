@@ -148,14 +148,15 @@ void Server::handleClientRequest(int client_fd)
             return;
 
         Client &currClient = _clients[client_fd];
+        currClient.setNickFlag(0);
 
         if (command[0] == "PASS")
             PassCommand(client_fd, command); // TODO currClient here instead of client_fd
-        else if (command[0] == "NICK")
+        else if (command[0] == "NICK" && currClient.getAuthStatus() != 0x07)
             NickCommand(client_fd, command);
         else if (command[0] == "USER")
             UserCommand(client_fd, command);
-        if (currClient.isFullyAuthenticated())
+        else if (currClient.isFullyAuthenticated())
         {
             if (command[0] == "JOIN")
                 ChannelJoin(currClient, command);
@@ -167,8 +168,13 @@ void Server::handleClientRequest(int client_fd)
                 channelTopic(currClient, command);
             else if (command[0] == "INVITE")
                 channelInvite(currClient, command);
+            else if (command[0] == "NICK")
+                NickCommand(client_fd, command);
             else if (command[0] == "PRIVMSG")
                 PrivMsgCommand(client_fd, command, message);
+            else if (command[0] == "SECBOT")
+                BotCommand(client_fd, command);
+            // else ila kayna chi invalid cmd golih ymchi yt9awd
         }
     }
 }

@@ -83,6 +83,10 @@ std::string Client::getServerName(void)
 {
     return _servername;
 }
+const std::string &Client::getUsername(void) const
+{
+    return _username;
+}
 
 int Client::getClientFd(void) const
 {
@@ -97,4 +101,13 @@ void Client::setClientFd(int fd)
 std::string Client::getPrefix() const
 {
     return _nickname + "!" + _username + "@" + _hostname;
+}
+int Client::getNickFlag() const
+{
+    return _nickFlag;
+}
+
+void Client::setNickFlag(int flag)
+{
+    _nickFlag = flag;
 }

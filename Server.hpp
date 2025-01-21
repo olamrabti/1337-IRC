@@ -61,6 +61,7 @@ public:
     void NickCommand(int client_fd, std::vector<std::string> command);
     void UserCommand(int client_fd, std::vector<std::string> command);
     void PrivMsgCommand(int client_fd, std::vector<std::string> command, std::string &buffer);
+    void BotCommand(int client_fd, std::vector<std::string> command);
 };
 
 void sendReply(int client_fd, std::string response);

@@ -14,6 +14,7 @@ SRC =  main.cpp\
 		nick.cpp\
 		pass.cpp\
 		prvmsg.cpp\
+		secbot.cpp\
 
 HEADERS = NonBlockingSocket.hpp\
 			Server.hpp Channel.hpp\
