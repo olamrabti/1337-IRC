@@ -25,9 +25,9 @@ public:
 
 	int getClientFd(void) const;
 	void setClientFd(int fd);
-	std::string getHostName(void);
-	std::string getRealName(void);
-	std::string getServerName(void);
+	std::string getHostName(void) const;
+	std::string getRealName(void) const;
+	std::string getServerName(void) const;
 	const std::string &getNickname(void) const;
 
 	const std::string &getPassword() const;

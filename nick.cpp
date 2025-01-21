@@ -1,9 +1,7 @@
 #include "Server.hpp"
 
-
 void Server::NickCommand(int client_fd, std::vector<std::string> command)
 {
-
     if (command.size() < 2)
     {
         sendReply(client_fd, ERR_NONICKNAMEGIVEN);
@@ -28,7 +26,7 @@ void Server::NickCommand(int client_fd, std::vector<std::string> command)
     std::cout << "Nickname set to " << nickname << " for client " << client_fd << std::endl;
     if (currClient.getAuthStatus() == 0x07 && currClient.getNickFlag() == 0)
     {
-        sendReply(client_fd, RPL_WELCOME(user_forma(_clients[client_fd].getNickname(), _clients[client_fd].getUsername(), _clients[client_fd].getHostname()), _clients[client_fd].getNickname()));
+        sendWelcomeMessages(client_fd, currClient);
         currClient.setNickFlag(1);
     }
 }

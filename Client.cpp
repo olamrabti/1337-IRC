@@ -69,17 +69,17 @@ bool Client::isFullyAuthenticated() const
     return (_authStatus & 0x07) == 0x07;
 }
 
-std::string Client::getHostName(void)
+std::string Client::getHostName(void) const
 {
     return _hostname;
 }
 
-std::string Client::getRealName(void)
+std::string Client::getRealName(void) const
 {
     return _realname;
 }
 
-std::string Client::getServerName(void)
+std::string Client::getServerName(void) const
 {
     return _servername;
 }
