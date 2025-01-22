@@ -16,6 +16,13 @@ void Server::broadcastToChannel(const std::string &channel_name, const std::stri
     if (channel_it != _channels.end())
     {
         std::map<std::string, Client> &clients_in_channel = channel_it->second.getClients();
+        if (clients_in_channel.find(sender) == clients_in_channel.end())
+        {
+            int client = getClientByNickname(sender);
+            sendReply(client, ERR_CANNOTSENDTOCHAN(sender, channel_name));
+            return;
+        }
+
         for (std::map<std::string, Client>::iterator client_it = clients_in_channel.begin(); client_it != clients_in_channel.end(); ++client_it)
         {
             if (client_it->first != sender)

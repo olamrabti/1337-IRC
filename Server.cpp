@@ -184,4 +184,3 @@ void sendReply(int client_fd, std::string response)
     if (send(client_fd, response.c_str(), response.length(), 0) == -1)
         std::cerr << "Error: send() failed" << std::endl;
 }
-
