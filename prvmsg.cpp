@@ -63,7 +63,6 @@ void Server::handleDCCCommand(int client_fd, const std::string &target, const st
         return;
     }
 
-    // Send DCC SEND command to the target client
     std::string sender_nick = _clients[client_fd].getNickname();
     std::string formatted_msg = ":" + sender_nick + " PRIVMSG " + target + " :" + message;
     sendToClient(target, sender_nick, formatted_msg);
