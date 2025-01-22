@@ -57,6 +57,5 @@
 #define  RPL_TOPICWHOTIME(client, channel, setter, datetime) (": 333 " + client + " " + channel + " "  + setter + " " + datetime + " \r\n")
 #define  RPL_NOTOPIC(client, channel) (": 331 " + client + " " + channel  + " :No topic is set.\r\n")
 #define  RPL_TOPICCHANGE(client, client_host, channel, topic) (":" + client + "!"+ client_host + " TOPIC " + channel_name + " :" +  topic + " \r\n")
-# define ERR_NOTEXTTOSEND(client) ("412 " + client + " :No text to send\r\n")
 
 #endif

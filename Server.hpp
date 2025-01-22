@@ -62,6 +62,7 @@ public:
     void UserCommand(int client_fd, std::vector<std::string> command);
     void PrivMsgCommand(int client_fd, std::vector<std::string> command, std::string &buffer);
     void BotCommand(int client_fd, std::vector<std::string> command);
+    void handleDCCCommand(int client_fd, const std::string &target, const std::string &message);
 };
 
 void sendReply(int client_fd, std::string response);

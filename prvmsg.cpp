@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include <sstream>
 
 int Server::getClientByNickname(const std::string &nickname) const
 {
@@ -16,12 +17,17 @@ void Server::broadcastToChannel(const std::string &channel_name, const std::stri
     if (channel_it != _channels.end())
     {
         std::map<std::string, Client> &clients_in_channel = channel_it->second.getClients();
+        if(clients_in_channel.find(sender) == clients_in_channel.end())
+        {
+            sendReply(_clients[getClientByNickname(sender)].getClientFd(), ERR_CANNOTSENDTOCHAN(sender, channel_name));
+            return;
+        }
         for (std::map<std::string, Client>::iterator client_it = clients_in_channel.begin(); client_it != clients_in_channel.end(); ++client_it)
         {
             if (client_it->first != sender)
             {
                 std::string formatted_msg = ":" + sender + " PRIVMSG " + channel_name + " :" + message;
-                send(client_it->second.getClientFd(), formatted_msg.c_str(), formatted_msg.size(), 0);
+                sendReply(client_it->second.getClientFd(), formatted_msg);
             }
         }
     }
@@ -37,12 +43,30 @@ void Server::sendToClient(const std::string &target_nick, const std::string &sen
     if (target_fd != -1)
     {
         std::string formatted_msg = ":" + sender_nick + " PRIVMSG " + target_nick + " :" + message;
-        send(target_fd, formatted_msg.c_str(), formatted_msg.size(), 0);
+        sendReply(target_fd, formatted_msg);
     }
     else
     {
         sendReply(_clients[getClientByNickname(sender_nick)].getClientFd(), ERR_NOSUCHNICK(sender_nick, target_nick));
     }
+}
+
+void Server::handleDCCCommand(int client_fd, const std::string &target, const std::string &message)
+{
+    std::istringstream iss(message);
+    std::string dcc, type, filename, address, port_str, size_str;
+    iss >> dcc >> type >> filename >> address >> port_str >> size_str;
+
+    if (dcc != "DCC" || type != "SEND")
+    {
+        sendReply(client_fd, ERR_UNKNOWNCOMMAND(_clients[client_fd].getNickname(), "PRIVMSG"));
+        return;
+    }
+
+    // Send DCC SEND command to the target client
+    std::string sender_nick = _clients[client_fd].getNickname();
+    std::string formatted_msg = ":" + sender_nick + " PRIVMSG " + target + " :" + message;
+    sendToClient(target, sender_nick, formatted_msg);
 }
 
 void Server::PrivMsgCommand(int client_fd, std::vector<std::string> command, std::string &buffer)
@@ -78,7 +102,12 @@ void Server::PrivMsgCommand(int client_fd, std::vector<std::string> command, std
         }
         else
         {
-            sendToClient(target, sender_nick, message);
+            if (message.find("DCC SEND") != std::string::npos)
+            {
+                handleDCCCommand(client_fd, target, message);
+            }
+            else
+                sendToClient(target, sender_nick, message);
         }
     }
 }
