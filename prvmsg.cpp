@@ -91,7 +91,7 @@ void Server::PrivMsgCommand(int client_fd, std::vector<std::string> command, std
     for (size_t i = 0; i < target_list.size(); ++i)
     {
         std::string target = target_list[i];
-        if (target[0] == '#')
+        if (target[0] == '#' || target[0] == '&')
         {
             broadcastToChannel(target, sender_nick, message);
         }
