@@ -54,6 +54,12 @@ void Server::sendToClient(const std::string &target_nick, const std::string &sen
 
 void Server::PrivMsgCommand(int client_fd, std::vector<std::string> command, std::string &buffer)
 {
+    if (!_clients[client_fd].isRegistered())
+    {
+        sendReply(client_fd, ERR_NOTREGISTERED(_clients[client_fd].getNickname(), _clients[client_fd].getHostName()));
+        return;
+    }
+
     if (command.size() < 2)
     {
         sendReply(client_fd, ERR_NORECIPIENT(_clients[client_fd].getNickname()));
@@ -77,7 +83,19 @@ void Server::PrivMsgCommand(int client_fd, std::vector<std::string> command, std
         std::string target = target_list[i];
         if (target[0] == '#')
         {
-            broadcastToChannel(target, sender_nick, message);
+            std::map<std::string, Channel>::iterator channel_it = _channels.find(target);
+            if (channel_it == _channels.end())
+            {
+                sendReply(client_fd, ERR_NOSUCHCHANNEL(sender_nick, target));
+            }
+            else if (!channel_it->second.isClientInChannel(sender_nick))
+            {
+                sendReply(client_fd, ERR_NOTONCHANNEL(sender_nick, target));
+            }
+            else
+            {
+                broadcastToChannel(target, sender_nick, message);
+            }
         }
         else
         {

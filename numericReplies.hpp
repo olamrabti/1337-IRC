@@ -58,5 +58,6 @@
 #define RPL_NOTOPIC(client, channel) (": 331 " + client + " " + channel + " :No topic is set.\r\n")
 #define RPL_TOPICCHANGE(client, client_host, channel, topic) (":" + client + "!" + client_host + " TOPIC " + channel_name + " :" + topic + " \r\n")
 #define PRIVMSG_FORMAT(senderNick, senderUsername, senderHostname, receiver, message) ":" + senderNick + "!~" + senderUsername + "@" + senderHostname + " PRIVMSG " + receiver + " :" + message + "\r\n"
+#define ERR_NOTREGISTERED(hostname, nick) ":" + hostname + " 451 " + nick + " :You have not registered\r\n"
 
 #endif
