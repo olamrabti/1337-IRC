@@ -27,8 +27,8 @@ void Server::broadcastToChannel(const std::string &channel_name, const std::stri
         {
             if (client_it->first != sender)
             {
-                std::string formatted_msg = ":" + sender + " PRIVMSG " + channel_name + " :" + message;
-                send(client_it->second.getClientFd(), formatted_msg.c_str(), formatted_msg.size(), 0);
+                std::string formatted_msg = PRIVMSG_FORMAT(sender, _clients[getClientByNickname(sender)].getUsername(), _clients[getClientByNickname(sender)].getHostName(), channel_name, message);
+                sendReply(client_it->second.getClientFd(), formatted_msg);
             }
         }
     }
@@ -43,8 +43,8 @@ void Server::sendToClient(const std::string &target_nick, const std::string &sen
     int target_fd = getClientByNickname(target_nick);
     if (target_fd != -1)
     {
-        std::string formatted_msg = ":" + sender_nick + " PRIVMSG " + target_nick + " :" + message;
-        send(target_fd, formatted_msg.c_str(), formatted_msg.size(), 0);
+        std::string formatted_msg = PRIVMSG_FORMAT(sender_nick, _clients[getClientByNickname(sender_nick)].getUsername(), _clients[getClientByNickname(sender_nick)].getHostName(), target_nick, message);
+        sendReply(target_fd, formatted_msg);
     }
     else
     {
