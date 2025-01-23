@@ -119,15 +119,15 @@ std::map<std::string, Client> &Channel::getClients(void)
 
 bool Channel::removeClient(const std::string &nickname)
 {
-	std::map<std::string, Client>::iterator it;
-	it = _clients.find(nickname);
-	if (it == _clients.end())
-		return false;
-	else
+	std::map<std::string, Client>::iterator it = _clients.find(nickname);
+	if (it != _clients.end())
 	{
 		_clients.erase(it);
+		if (_operators.find(nickname) != _operators.end())
+			_operators.erase(nickname);
 		return true;
 	}
+	return false;
 }
 
 void Channel::setTopic(const std::string &topic) // TODO
@@ -244,10 +244,7 @@ bool Channel::isOperator(const std::string &nickname) const
 void Channel::broadcastMessage(std::string message)
 {
 	for (std::map<std::string, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
-	{
-		std::cout << " clients in channel: " << this->_name << " " << it->second.getNickname() << std::endl;
 		sendReply(it->second.getClientFd(), message);
-	}
 }
 
 std::string Channel::getCreationDate(void) const

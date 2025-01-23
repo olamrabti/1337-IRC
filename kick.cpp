@@ -9,6 +9,8 @@ std::string getReason(std::vector<std::string> command)
             result += " ";
         result += command[i];
     }
+    if (!result.empty() && result[0] == ':')
+        result = result.substr(1);
     return result;
 }
 
@@ -52,6 +54,17 @@ void Server::channelKick(Client &currClient, std::vector<std::string> command)
         {
             _channels.erase(it);
             sendReply(currClient.getClientFd(), "Channel " + channelName + " deleted as it has no more users.");
+            return;
+        }
+        if (currChannel.getOperators().empty())
+        {
+            std::map<std::string, Client>::iterator it_target = currChannel.getClients().begin();
+            if (it_target != currChannel.getClients().end())
+            {
+                Client &targetClient = it_target->second;
+                currChannel.addOperator(targetClient.getNickname());
+                sendReply(targetClient.getClientFd(), RPL_YOUREOPER(targetClient.getNickname()));
+            }
         }
     }
 }

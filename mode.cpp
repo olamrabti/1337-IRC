@@ -5,6 +5,46 @@ bool isValidMode(char c)
     return (c == 'i' || c == 't' || c == 'k' || c == 'o' || c == 'l');
 }
 
+int ft_atoi(std::string parameter)
+{
+    size_t i = 0;
+    int signe = 1;
+    unsigned long long total = 0;
+
+    while (parameter[i] >= 9 && parameter[i] <= 13)
+        i++;
+    if (parameter[i] == '+' || parameter[i] == '-')
+    {
+        if (parameter[i] == '-')
+            signe = -1;
+        i++;
+    }
+    while (parameter[i] >= '0' && parameter[i] <= '9')
+    {
+        if (total > (9223372036854775807ULL - (parameter[i] - '0')) / 10)
+            return (signe == 1 ? -1 : 0);
+        total = total * 10 + (parameter[i] - '0');
+        i++;
+    }
+    return ((int)(signe * total));
+}
+
+bool valideNumber(const std::string &number)
+{
+    int start = 0;
+
+    if (number[0] == '+' || number[0] == '-')
+        start = 1;
+
+    for (size_t i = start; i < number.size(); i++)
+    {
+        if (number[i] < '0' || number[i] > '9')
+            return false;
+    }
+
+    return true;
+}
+
 std::vector<std::string> parseModes(const std::string &modes, Client &currClient)
 {
     std::vector<std::string> result;
@@ -35,7 +75,7 @@ std::vector<std::string> parseParametres(std::vector<std::string> command)
     return result;
 }
 
-void oModeParam(Channel &currChannel, std::string parameter, std::string mode, Client &currClient, std::map<int, Client> _clients)
+void oModeParam(Channel &currChannel, std::string parameter, std::string mode, Client &currClient)
 {
     if (parameter.empty())
     {
@@ -56,9 +96,11 @@ void oModeParam(Channel &currChannel, std::string parameter, std::string mode, C
             sendReply(currClient.getClientFd(), ERR_INVALIDMODEPARAM(currClient.getNickname(), currChannel.getName(), mode));
             return;
         }
+        Client &targetClient = it_client->second;
         currChannel.addOperator(parameter);
+        sendReply(targetClient.getClientFd(), RPL_YOUREOPER(targetClient.getNickname()));
         sendReply(currClient.getClientFd(), ":" + currClient.getPrefix() + " MODE " + currChannel.getName() + " +o " + parameter + "\r\n");
-        // sendReply(currClient.getClientFd(), RPL_CHANNELMODEIS(currClient.getNickname(), currChannel.getName(), mode));
+        sendReply(currClient.getClientFd(), RPL_CHANNELMODEIS(currClient.getNickname(), currChannel.getName(), mode));
     }
     else if (mode == "-o")
     {
@@ -134,17 +176,21 @@ void pluslModeParam(Channel &currChannel, const std::string &parameter, const st
             sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), "MODE"));
             return;
         }
-
-        try
-        {
-            int limit = std::stoi(parameter);
-            currChannel.setUserLimit(limit);
-            sendReply(currClient.getClientFd(), ":" + currClient.getPrefix() + " MODE " + currChannel.getName() + " +l " + parameter + "\r\n");
-        }
-        catch (const std::exception &e)
+        if (!valideNumber(parameter))
         {
             sendReply(currClient.getClientFd(), ERR_INVALIDMODEPARAM(currClient.getNickname(), currChannel.getName(), mode));
+            return;
         }
+
+        int limit = ft_atoi(parameter);
+        if (limit <= 0)
+        {
+            sendReply(currClient.getClientFd(), ERR_INVALIDMODEPARAM(currClient.getNickname(), currChannel.getName(), mode));
+            return;
+        }
+
+        currChannel.setUserLimit(limit);
+        sendReply(currClient.getClientFd(), ":" + currClient.getPrefix() + " MODE " + currChannel.getName() + " +l " + parameter + "\r\n");
     }
 }
 
@@ -168,12 +214,18 @@ void tModeParam(Channel &currChannel, const std::string &mode, Client &currClien
 
 void Server::channelMode(Client &currClient, std::vector<std::string> command)
 {
-    if (command.size() < 3)
+    if (command.size() < 2)
     {
         sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), command[0]));
         return;
     }
     std::string channelName = command[1];
+    std::map<std::string, Channel>::iterator it = _channels.find(channelName);
+    if (command.size() == 2 && it != _channels.end())
+    {
+        sendReply(currClient.getClientFd(), RPL_CREATIONTIME(currClient.getNickname(), channelName, it->second.getCreationDate()));
+        return;
+    }
     std::vector<std::string> modes;
     if (command.size() >= 3)
         modes = parseModes(command[2], currClient);
@@ -184,8 +236,6 @@ void Server::channelMode(Client &currClient, std::vector<std::string> command)
     }
     std::vector<std::string> parameters = parseParametres(command);
 
-    std::map<std::string, Channel>::iterator it;
-    it = _channels.find(channelName);
     if (it == _channels.end())
     {
         sendReply(currClient.getClientFd(), ERR_NOSUCHCHANNEL(currClient.getNickname(), channelName));
@@ -205,9 +255,9 @@ void Server::channelMode(Client &currClient, std::vector<std::string> command)
         {
             if (modes[i] == "+o" || modes[i] == "-o")
             {
-                if (parameters.size() > paramCount)
+                if ((int)parameters.size() > paramCount)
                 {
-                    oModeParam(currChannel, parameters[paramCount], modes[i], currClient, _clients);
+                    oModeParam(currChannel, parameters[paramCount], modes[i], currClient); //
                     paramCount++;
                 }
                 else
@@ -224,7 +274,7 @@ void Server::channelMode(Client &currClient, std::vector<std::string> command)
             {
                 if (modes[i] == "+k")
                 {
-                    if (parameters.size() > paramCount)
+                    if ((int)parameters.size() > paramCount)
                     {
                         pluskModeParam(currChannel, parameters[paramCount], modes[i], currClient);
                         paramCount++;
@@ -242,7 +292,7 @@ void Server::channelMode(Client &currClient, std::vector<std::string> command)
             {
                 if (modes[i] == "+l")
                 {
-                    if (parameters.size() > paramCount)
+                    if ((int)parameters.size() > paramCount)
                     {
                         pluslModeParam(currChannel, parameters[paramCount], modes[i], currClient);
                         paramCount++;

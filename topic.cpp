@@ -1,5 +1,19 @@
 #include "Server.hpp"
 
+std::string getTopic(std::vector<std::string> command)
+{
+    std::string result = "";
+    for (size_t i = 2; i < command.size(); i++)
+    {
+        if (i > 2)
+            result += " ";
+        result += command[i];
+    }
+    if (!result.empty() && result[0] == ':')
+        result = result.substr(1);
+    return result;
+}
+
 void Server::channelTopic(Client &currClient, std::vector<std::string> command)
 {
     if (command.size() < 2)
@@ -9,7 +23,7 @@ void Server::channelTopic(Client &currClient, std::vector<std::string> command)
     }
 
     std::string channelName = command[1];
-    std::string newTopic = (command.size() > 2) ? command[2] : "";
+    std::string newTopic = getTopic(command);
 
     std::map<std::string, Channel>::iterator it = _channels.find(channelName);
     if (it == _channels.end())
@@ -43,7 +57,5 @@ void Server::channelTopic(Client &currClient, std::vector<std::string> command)
     currChannel.setTopic(newTopic);
     currChannel.setTopicDate(getCurrTime());
     currChannel.setTopicSetter(currClient.getNickname());
-
-    std::string message = RPL_TOPIC(currClient.getNickname(), channelName, newTopic);
-    currChannel.broadcastMessage(message);
+    currChannel.broadcastMessage(RPL_TOPIC(currClient.getNickname(), channelName, newTopic));
 }
