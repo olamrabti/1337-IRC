@@ -10,7 +10,7 @@ int Server::getClientByNickname(const std::string &nickname) const
     return -1;
 }
 
-void Server::broadcastToChannel(const std::string &channel_name, const std::string &sender, const std::string &message)
+void Server::broadcastToChannel(int client_fd, const std::string &channel_name, const std::string &sender, const std::string &message)
 {
     std::map<std::string, Channel>::iterator channel_it = _channels.find(channel_name);
     if (channel_it != _channels.end())
@@ -34,7 +34,7 @@ void Server::broadcastToChannel(const std::string &channel_name, const std::stri
     }
     else
     {
-        sendReply(_clients[getClientByNickname(sender)].getClientFd(), ERR_NOSUCHCHANNEL(sender, channel_name));
+        sendReply(_clients[getClientByNickname(sender)].getClientFd(), ERR_NOSUCHCHANNEL(_clients[client_fd].getHostName(), _clients[client_fd].getNickname(), sender));
     }
 }
 
@@ -62,13 +62,13 @@ void Server::PrivMsgCommand(int client_fd, std::vector<std::string> command, std
 
     if (command.size() < 2)
     {
-        sendReply(client_fd, ERR_NORECIPIENT(_clients[client_fd].getNickname()));
+        sendReply(client_fd, ERR_NORECIPIENT(_clients[client_fd].getHostName(), _clients[client_fd].getNickname(), "PRIVMSG"));
         return;
     }
 
     if (command.size() < 3)
     {
-        sendReply(client_fd, ERR_NOTEXTTOSEND(_clients[client_fd].getNickname()));
+        sendReply(client_fd, ERR_NOTEXTTOSEND(_clients[client_fd].getNickname(), _clients[client_fd].getHostName()));
         return;
     }
 
@@ -86,15 +86,15 @@ void Server::PrivMsgCommand(int client_fd, std::vector<std::string> command, std
             std::map<std::string, Channel>::iterator channel_it = _channels.find(target);
             if (channel_it == _channels.end())
             {
-                sendReply(client_fd, ERR_NOSUCHCHANNEL(sender_nick, target));
+                sendReply(client_fd, ERR_NOSUCHCHANNEL(_clients[client_fd].getHostName(), _clients[client_fd].getNickname(), target));
             }
             else if (!channel_it->second.isClientInChannel(sender_nick))
             {
-                sendReply(client_fd, ERR_NOTONCHANNEL(sender_nick, target));
+                sendReply(client_fd, ERR_NOTONCHANNEL(_clients[client_fd].getHostName(), target));
             }
             else
             {
-                broadcastToChannel(target, sender_nick, message);
+                broadcastToChannel(client_fd, target, sender_nick, message);
             }
         }
         else
