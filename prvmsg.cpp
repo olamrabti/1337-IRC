@@ -79,10 +79,6 @@ void Server::PrivMsgCommand(int client_fd, std::vector<std::string> command, std
         {
             broadcastToChannel(target, sender_nick, message);
         }
-        else if (target[0] == '$' || target[0] == '#')
-        {
-            sendReply(client_fd, ERR_UNKNOWNCOMMAND(_clients[client_fd].getNickname(), "PRIVMSG"));
-        }
         else
         {
             sendToClient(target, sender_nick, message);
