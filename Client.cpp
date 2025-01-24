@@ -4,32 +4,20 @@ Client::Client(void) : _authStatus(0) {}
 
 Client::Client(std::string nickname) : _nickname(nickname), _authStatus(0) {}
 
-Client::~Client(void) {}
-
-Client &Client::operator = (Client const &other)
+Client::Client(int fd)
 {
-	return (*this);
+    _client_fd = fd;
+    _authStatus = 0;
+    _nickname = "";
+    _username = "";
 }
+
+Client::~Client(void) {}
 
 const std::string &Client::getNickname(void) const
 {
-	return _nickname;
+    return _nickname;
 }
-
-const std::string &Client::getUsername(void) const
-{
-    return _username;
-}
-
-// void Client::setPassword(const std::string &password)
-// {
-//     _password = password;
-// }
-
-// const std::string &Client::getPassword() const
-// {
-//     return _password;
-// }
 
 bool Client::isRegistered() const
 {
@@ -81,19 +69,23 @@ bool Client::isFullyAuthenticated() const
     return (_authStatus & 0x07) == 0x07;
 }
 
-std::string Client::getHostName(void)
+std::string Client::getHostName(void) const
 {
     return _hostname;
 }
 
-std::string Client::getRealName(void)
+std::string Client::getRealName(void) const
 {
     return _realname;
 }
 
-std::string Client::getServerName(void)
+std::string Client::getServerName(void) const
 {
     return _servername;
+}
+const std::string &Client::getUsername(void) const
+{
+    return _username;
 }
 
 int Client::getClientFd(void) const
@@ -106,6 +98,10 @@ void Client::setClientFd(int fd)
     this->_client_fd = fd;
 }
 
+std::string Client::getPrefix() const
+{
+    return _nickname + "!" + _username + "@" + _hostname;
+}
 int Client::getNickFlag() const
 {
     return _nickFlag;

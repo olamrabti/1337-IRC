@@ -1,40 +1,67 @@
 #include "Server.hpp"
 
-void Server::channelTopic(int client_fd, std::vector<std::string> command)
+std::string getTopic(std::vector<std::string> command)
 {
-    if (command.size() < 2 || command.size() > 3)
+    std::string result = "";
+    for (size_t i = 2; i < command.size(); i++)
     {
-        std::cout << "Error: TOPIC <channel> [<topic>]\n";
+        if (i > 2)
+            result += " ";
+        result += command[i];
+    }
+    if (!result.empty() && result[0] == ':')
+        result = result.substr(1);
+    return result;
+}
+
+void Server::channelTopic(Client &currClient, std::vector<std::string> command)
+{
+    if (command.size() < 2)
+    {
+        sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), currClient.getHostName(), command[0]));
         return;
     }
+
     std::string channelName = command[1];
-    std::string newTopic = command[2];
-    std::map<std::string, Channel>::iterator it;
-    it = _channels.find(channelName);
+    std::string newTopic = getTopic(command);
+
+    std::map<std::string, Channel>::iterator it = _channels.find(channelName);
     if (it == _channels.end())
     {
-        std::cout << "Error: channel " << channelName << " does not exist" << std::endl;
+        sendReply(currClient.getClientFd(), ERR_NOSUCHCHANNEL(currClient.getHostName(), currClient.getNickname(), channelName));
         return;
     }
-    else
+
+    Channel &currChannel = it->second;
+
+    if (!currChannel.isClientInChannel(currClient.getNickname()))
     {
-        Channel currChannel = it->second;
-        Client currClient = _clients[client_fd];
-        if (currChannel.isOperator(currClient.getNickname()) == false)
+        sendReply(currClient.getClientFd(), ERR_USERNOTINCHANNEL(currClient.getNickname(), currClient.getNickname() , channelName));
+        return;
+    }
+
+    if (command.size() == 2)
+    {
+        if (currChannel.getTopic().empty())
         {
-            std::cout << "Error: " << currClient.getNickname() << " is not an operator in channel " << channelName << std::endl;
-            return;
-        }
-        if (command.size() == 2)
-        {
-            std::cout << "Topic for channel " << channelName << " is " << currChannel.getTopic() << std::endl;
+            sendReply(currClient.getClientFd(), RPL_NOTOPIC(currClient.getHostName(), currClient.getNickname(), channelName));
         }
         else
         {
-            currChannel.setTopic(newTopic);
-            std::cout << "Topic for channel " << channelName << " is set to " << newTopic << std::endl;
+            sendReply(currClient.getClientFd(), RPL_TOPIC(currClient.getHostName(), currClient.getNickname(), channelName, currChannel.getTopic()));
+            sendReply(currClient.getClientFd(), RPL_TOPICWHOTIME(currClient.getNickname(), channelName, currChannel.getTopicSetter(), currChannel.getTopicDdate()));
         }
+        return;
     }
 
-}
+    if (currChannel.getTopicLock() && !currChannel.isOperator(currClient.getNickname()))
+    {
+        sendReply(currClient.getClientFd(), ERR_CHANOPRIVSNEEDED(currClient.getHostName(), currClient.getNickname(), channelName));
+        return;
+    }
 
+    currChannel.setTopic(newTopic);
+    currChannel.setTopicDate(getCurrTime());
+    currChannel.setTopicSetter(currClient.getNickname());
+    currChannel.broadcastMessage(RPL_TOPIC(currClient.getHostName(), currClient.getNickname(), channelName, newTopic));
+}

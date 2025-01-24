@@ -3,6 +3,9 @@
 
 #include <iostream>
 #include <sys/socket.h>
+#include <string>
+#include <ctype.h>
+#include <errno.h>
 #include <exception>
 #include <cstdlib>
 #include <cstring>
@@ -29,38 +32,43 @@ class Server
 private:
     int _server_fd;
     int _port;
-     std::string _password;
+    std::string _password;
     int _client_count;
     struct pollfd fds[FD_SETSIZE];
-    std::map<int, Client> _clients; // Client TODO 
+    std::map<int, Client> _clients; // Client TODO
     std::map<std::string, Channel> _channels;
 
 public:
     Server(int port, std::string password);
-
+    ~Server();
     void run();
     void startServer();
     void handleNewClient();
     void handleClientRequest(int client_fd);
     void removeClient(int client_fd);
-    
-    // pp:
-    void ChannelJoin(int client_fd, std::vector<std::string> command);
-    void joinCommand(std::string channelName, std::string key, int client_fd);
-    void channelTopic(int client_fd, std::vector<std::string> command);
-    void channelMode(int client_fd, std::vector<std::string> command);
-    void channelKick(int client_fd, std::vector<std::string> command);
-    void channelInvite(int client_fd, std::vector<std::string> command);
+    void cleanup();
+    int getClientByNickname(const std::string &nickname) const;
+    void broadcastToChannel(const std::string &channel_name, const std::string &host, const std::string &sender, const std::string &message);
+    void sendToClient(const std::string &target_nick, const std::string &host, const std::string &sender_nick, const std::string &message);
 
-    // salmane 
+    // pp:
+    void ChannelJoin(Client &currClient, std::vector<std::string> command);
+    void joinCommand(std::string channelName, std::string key, Client &currClient);
+    void channelTopic(Client &currClient, std::vector<std::string> command);
+    void channelMode(Client &currClient, std::vector<std::string> command);
+    void channelKick(Client &currClient, std::vector<std::string> command);
+    void channelInvite(Client &currClient, std::vector<std::string> command);
+    void kickCommand(Client& currClient, std::string channelName, std::string nickname, std::string reason);
+
+    // salmane
     void PassCommand(int client_fd, std::vector<std::string> command);
     void NickCommand(int client_fd, std::vector<std::string> command);
     void UserCommand(int client_fd, std::vector<std::string> command);
+    void PrivMsgCommand(int client_fd, std::vector<std::string> command, std::string &buffer);
     void BotCommand(int client_fd, std::vector<std::string> command);
-
-
 };
 
-void    sendReply(int client_fd, std::string response);
+void sendReply(int client_fd, std::string response);
+void sendWelcomeMessages(int client_fd, const Client& client);
 
 #endif
