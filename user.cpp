@@ -62,7 +62,7 @@ void Server::UserCommand(int client_fd, std::vector<std::string> command)
     }
 
     currClient.setUsername(username);
-    currClient.setHostname(hostname);
+    //currClient.setHostname(hostname);
     currClient.setServername(servername);
     currClient.setRealname(realname);
     currClient.setRegistered(true);

@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include <unistd.h>
 
 Client::Client(void) : _authStatus(0) {}
 
@@ -10,6 +11,12 @@ Client::Client(int fd)
     _authStatus = 0;
     _nickname = "";
     _username = "";
+    char hostBuffer[256];
+    if (gethostname(hostBuffer, sizeof(hostBuffer)) == 0)
+        _hostname = hostBuffer;
+    else
+        _hostname = "localhost";
+
 }
 
 Client::~Client(void) {}
