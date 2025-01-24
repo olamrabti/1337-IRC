@@ -69,6 +69,7 @@ void Server::joinCommand(std::string channelName, std::string key, Client &currC
             sendReply(client_fd, RPL_TOPICWHOTIME(currClient.getNickname(), channelName, currChannel.getTopicSetter(), currChannel.getTopicDdate()));
         }
         sendReply(client_fd, RPL_NAMREPLY(currClient.getHostName(), currClient.getNickname(), channelName, currChannel.getAllUsersNames()));
+        std::cout << currClient.getNickname() << " channelname: " << channelName << " Nicknames: " << currChannel.getAllUsersNames() << std::endl;
         sendReply(client_fd, RPL_ENDOFNAMES(currClient.getHostName(), currClient.getNickname(), channelName));
     }
 }
