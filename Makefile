@@ -1,6 +1,6 @@
 NAME = ircserv
 CC = c++
-FLAGS = #-Wall -Wextra -Werror -std=c++98 
+FLAGS = -Wall -Wextra -Werror -std=c++98 -fsanitize=address 
 SRC =  main.cpp\
 		NonBlockingSocket.cpp\
 		Server.cpp Channel.cpp\
@@ -14,6 +14,7 @@ SRC =  main.cpp\
 		nick.cpp\
 		pass.cpp\
 		prvmsg.cpp\
+		secbot.cpp\
 
 HEADERS = NonBlockingSocket.hpp\
 			Server.hpp Channel.hpp\

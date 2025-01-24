@@ -9,6 +9,8 @@
 #include "Client.hpp"
 #include "Server.hpp"
 
+class Client;
+
 class Channel
 {
 private:
@@ -21,9 +23,9 @@ private:
     std::map<std::string, Client> _clients;
     std::set<std::string> _operators;
     std::set<std::string> _invited;
-    size_t _userLimit; // User limit for +l mode
-    bool _inviteOnly;  // Invite-only mode (+i)
-    bool _topicLock;   // Topic lock mode (+t)
+    size_t _userLimit;
+    bool _inviteOnly;
+    bool _topicLock;
 
 public:
     Channel(void);

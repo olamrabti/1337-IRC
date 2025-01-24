@@ -55,14 +55,17 @@ public:
     void channelMode(Client &currClient, std::vector<std::string> command);
     void channelKick(Client &currClient, std::vector<std::string> command);
     void channelInvite(Client &currClient, std::vector<std::string> command);
+    void kickCommand(Client& currClient, std::string channelName, std::string nickname, std::string reason);
 
     // salmane
     void PassCommand(int client_fd, std::vector<std::string> command);
     void NickCommand(int client_fd, std::vector<std::string> command);
     void UserCommand(int client_fd, std::vector<std::string> command);
     void PrivMsgCommand(int client_fd, std::vector<std::string> command, std::string &buffer);
+    void BotCommand(int client_fd, std::vector<std::string> command);
 };
 
 void sendReply(int client_fd, std::string response);
+void sendWelcomeMessages(int client_fd, const Client& client);
 
 #endif

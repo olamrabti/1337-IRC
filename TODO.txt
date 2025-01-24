@@ -68,3 +68,12 @@ MODE #linux +tkol-itko dddddj jk jk jk jk
 [ ] fill the Topic infos date and user setd it 
 
 [ ] kick remove user from operator o invited
+[ ] give th op role to another user if the op leaves the channel 
+[ ] notify for mode changes
+[ ] KICK doesnt kick
+
+[ ] KICK #channel1,#channel2 user1,user2 :Goodbye!
+KICK #channel3,#channel4 user1 :Goodbye!
+
+KICK #channel1,#channel2,#channel3 user1,user2,"" :siro t7waw
+JOIN #channel1,#channel2,#channel3

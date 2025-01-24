@@ -69,19 +69,23 @@ bool Client::isFullyAuthenticated() const
     return (_authStatus & 0x07) == 0x07;
 }
 
-std::string Client::getHostName(void)
+std::string Client::getHostName(void) const
 {
     return _hostname;
 }
 
-std::string Client::getRealName(void)
+std::string Client::getRealName(void) const
 {
     return _realname;
 }
 
-std::string Client::getServerName(void)
+std::string Client::getServerName(void) const
 {
     return _servername;
+}
+const std::string &Client::getUsername(void) const
+{
+    return _username;
 }
 
 int Client::getClientFd(void) const
@@ -97,4 +101,13 @@ void Client::setClientFd(int fd)
 std::string Client::getPrefix() const
 {
     return _nickname + "!" + _username + "@" + _hostname;
+}
+int Client::getNickFlag() const
+{
+    return _nickFlag;
+}
+
+void Client::setNickFlag(int flag)
+{
+    _nickFlag = flag;
 }

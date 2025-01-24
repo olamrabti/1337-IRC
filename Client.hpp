@@ -14,7 +14,9 @@ private:
 	std::string _realname;
 	// std::string _password;
 	bool _registered;
-	int _authStatus; // Bitwise flag for authentication status
+	int _authStatus;
+	int _nickFlag;
+
 public:
 	Client(void);
 	Client(std::string nickname);
@@ -23,9 +25,9 @@ public:
 
 	int getClientFd(void) const;
 	void setClientFd(int fd);
-	std::string getHostName(void);
-	std::string getRealName(void);
-	std::string getServerName(void);
+	std::string getHostName(void) const;
+	std::string getRealName(void) const;
+	std::string getServerName(void) const;
 	const std::string &getNickname(void) const;
 
 	const std::string &getPassword() const;
@@ -34,11 +36,15 @@ public:
 	void setNickname(const std::string &nickname);
 	void setUsername(const std::string &username);
 	void setHostname(const std::string &hostname);
+	const std::string &getUsername(void) const;
+
 	void setServername(const std::string &servername);
 	void setRealname(const std::string &realname);
 	void setAuthStatus(int status);
 	int getAuthStatus() const;
 	bool isFullyAuthenticated() const;
+	int getNickFlag() const;
+	void setNickFlag(int flag);
 
 	std::string getPrefix(void) const;
 };
