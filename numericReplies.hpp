@@ -20,8 +20,8 @@
 #define ERR_PASSWDMISMATCH(client) (":localhost 464 " + client + " :Password incorrect.\r\n")
 #define ERR_PASSINVALID(client) (":localhost 464 " + client + " :Not a Valid Password.\r\n")
 #define RPL_MYINFO(client, servername, version, user_modes, chan_modes, chan_param_modes) (":localhost 004 " + client + " " + servername + " " + version + " " + user_modes + " " + chan_modes + " " + chan_param_modes + "\r\n")
-#define ERR_NORECIPIENT(client) (":localhost 411 " + client + " :No recipient given (PRIVMSG)\r\n")
-#define ERR_NOTEXTTOSEND(client) (":localhost 412 " + client + " :No text to send\r\n")
+#define ERR_NORECIPIENT(hostname, nick, command) ":" + hostname + " 411 " + nick + " :No recipient given (" + command + ")\r\n"
+#define ERR_NOTEXTTOSEND(nick, hostname) ":" + hostname + " 412 " + nick + " :No text to send\r\n"
 #define ERR_CANNOTSENDTOCHAN(client, channel) (":localhost 404 " + client + " " + channel + " :Cannot send to channel\r\n")
 #define RPL_PRIVMSG(nick, username, target, message) (":" + nick + "!" + username + "@localhost PRIVMSG " + target + " :" + message + "\r\n")
 #define RPL_NICKCHANGED(Oldnick, client_host, Newnick) (":" + Oldnick + "!" + client_host + " NICK " + Newnick + "\r\n")
@@ -43,7 +43,7 @@
 #define ERR_CHANNELISFULL(client, channel) (":localhost 471 " + client + " " + channel + " :Cannot join channel (+l) - channel is full\r\n")
 #define ERR_INVITEONLYCHAN(client, channel) (":localhost 473 " + client + " " + channel + " :Cannot join channel (+i) - invite only\r\n")
 #define ERR_NOSUCHNICK(client, target) (":localhost 401 " + client + " " + target + " :No such nick/channel\r\n")
-#define ERR_NOSUCHCHANNEL(client, channel) (":localhost 403 " + client + " " + channel + " :No such channel\r\n")
+#define ERR_NOSUCHCHANNEL(hostname, nick, channel) ":" + hostname + " 403 " + nick + " " + channel + " :No such channel\r\n"
 #define ERR_USERONCHANNEL(client, nick, channel) (":localhost 443 " + client + " " + nick + " " + channel + " is already on channel\r\n")
 #define RPL_KICK(client, client_host, channel, kicked, reason) (":" + client + "!" + "Kicker@" + client_host + " KICK " + channel + " " + kicked + " :" + reason + "\r\n");
 #define RPL_NOTIFYQUIT(client, client_host, message) (":" + client + "!" + client_host + " QUIT :" + message + "\r\n")
@@ -57,6 +57,7 @@
 #define RPL_TOPICWHOTIME(client, channel, setter, datetime) (": 333 " + client + " " + channel + " " + setter + " " + datetime + " \r\n")
 #define RPL_NOTOPIC(client, channel) (": 331 " + client + " " + channel + " :No topic is set.\r\n")
 #define RPL_TOPICCHANGE(client, client_host, channel, topic) (":" + client + "!" + client_host + " TOPIC " + channel_name + " :" + topic + " \r\n")
-// # define ERR_NOTEXTTOSEND(client) ("412 " + client + " :No text to send\r\n")
+#define PRIVMSG_FORMAT(senderNick, senderUsername, senderHostname, receiver, message) ":" + senderNick + "!~" + senderUsername + "@" + senderHostname + " PRIVMSG " + receiver + " :" + message + "\r\n"
+#define ERR_NOTREGISTERED(hostname, nick) ":" + hostname + " 451 " + nick + " :You have not registered\r\n"
 
 #endif

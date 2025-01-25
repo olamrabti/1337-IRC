@@ -80,7 +80,9 @@
     "span": "cpp",
     "text_encoding": "cpp",
     "cinttypes": "cpp",
-    "variant": "cpp"
+    "variant": "cpp",
+    "__bits": "cpp",
+    "__verbose_abort": "cpp"
   },
   "C_Cpp_Runner.cCompilerPath": "gcc",
   "C_Cpp_Runner.cppCompilerPath": "g++",
