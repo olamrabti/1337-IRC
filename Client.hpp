@@ -12,7 +12,7 @@ private:
 	std::string _hostname;
 	std::string _servername;
 	std::string _realname;
-	// std::string _password;
+	std::string _ip;
 	bool _registered;
 	int _authStatus;
 	int _nickFlag;
@@ -30,12 +30,10 @@ public:
 	std::string getServerName(void) const;
 	const std::string &getNickname(void) const;
 
-	const std::string &getPassword() const;
 	bool isRegistered() const;
 	void setRegistered(bool registered);
 	void setNickname(const std::string &nickname);
 	void setUsername(const std::string &username);
-	void setHostname(const std::string &hostname);
 	const std::string &getUsername(void) const;
 
 	void setServername(const std::string &servername);
@@ -45,6 +43,8 @@ public:
 	bool isFullyAuthenticated() const;
 	int getNickFlag() const;
 	void setNickFlag(int flag);
+	void setAdresseIp(const std::string &ip);
+	const std::string &getAdresseIp() const;
 
 	std::string getPrefix(void) const;
 };

@@ -98,23 +98,19 @@ void Server::handleNewClient()
     if (client_fd < 0)
         throw std::runtime_error("Failed to accept client");
 
+    char *client_ip = inet_ntoa(client_addr.sin_addr);
+
     Client newClient(client_fd);
-    std::cout << "instance new client fd: " << newClient.getClientFd() << std::endl;
     _clients[client_fd] = newClient;
-    std::cout << "instance new client from the map: " << _clients[client_fd].getClientFd() << std::endl;
+    newClient.setAdresseIp(client_ip);
 
     NonBlockingSocket client_socket(client_fd);
     fds[_client_count].fd = client_fd;
     fds[_client_count].events = POLLIN;
 
-    // TODO might be removed !
-    // TODO might be removed !
-    std::ostringstream client_id;
-    client_id << client_fd;
-    // _clients[client_fd] = "client " + client_id.str();
-
     _client_count++;
     std::cout << "New client connected!" << std::endl;
+    std::cout << "from: " << client_ip << std::endl;
 }
 
 void Server::handleClientRequest(int client_fd)

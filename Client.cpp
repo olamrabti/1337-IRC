@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include <unistd.h>
 
 Client::Client(void) : _authStatus(0) {}
 
@@ -10,6 +11,11 @@ Client::Client(int fd)
     _authStatus = 0;
     _nickname = "";
     _username = "";
+    char hostBuffer[256];
+    if (gethostname(hostBuffer, sizeof(hostBuffer)) == 0)
+        _hostname = hostBuffer;
+    else
+        _hostname = "localhost";
 }
 
 Client::~Client(void) {}
@@ -39,11 +45,6 @@ void Client::setUsername(const std::string &username)
     _username = username;
 }
 
-void Client::setHostname(const std::string &hostname)
-{
-    _hostname = hostname;
-}
-
 void Client::setServername(const std::string &servername)
 {
     _servername = servername;
@@ -67,11 +68,6 @@ int Client::getAuthStatus() const
 bool Client::isFullyAuthenticated() const
 {
     return (_authStatus & 0x07) == 0x07;
-}
-
-std::string Client::getHostName(void) const
-{
-    return _hostname;
 }
 
 std::string Client::getRealName(void) const
@@ -98,6 +94,11 @@ void Client::setClientFd(int fd)
     this->_client_fd = fd;
 }
 
+std::string Client::getHostName(void) const
+{
+    return _hostname;
+}
+
 std::string Client::getPrefix() const
 {
     return _nickname + "!" + _username + "@" + _hostname;
@@ -110,4 +111,14 @@ int Client::getNickFlag() const
 void Client::setNickFlag(int flag)
 {
     _nickFlag = flag;
+}
+
+void Client::setAdresseIp(const std::string &ip)
+{
+    _ip = ip;
+}
+
+const std::string &Client::getAdresseIp() const
+{
+    return _ip;
 }
