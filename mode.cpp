@@ -238,7 +238,7 @@ void Server::channelMode(Client &currClient, std::vector<std::string> command)
 
     if (it == _channels.end())
     {
-        sendReply(currClient.getClientFd(), ERR_NOSUCHCHANNEL(currClient.getNickname(), channelName));
+        sendReply(currClient.getClientFd(), ERR_NOSUCHCHANNEL(currClient.getHostName(), currClient.getNickname(), channelName));
         return;
     }
     else

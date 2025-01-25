@@ -29,7 +29,7 @@ void Server::channelKick(Client &currClient, std::vector<std::string> command)
     it = _channels.find(channelName);
     if (it == _channels.end())
     {
-        sendReply(currClient.getClientFd(), ERR_NOSUCHCHANNEL(currClient.getNickname(), channelName));
+        sendReply(currClient.getClientFd(), ERR_NOSUCHCHANNEL(currClient.getHostName(), currClient.getNickname(), channelName));
         return;
     }
     Channel &currChannel = it->second;

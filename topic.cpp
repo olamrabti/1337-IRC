@@ -28,7 +28,7 @@ void Server::channelTopic(Client &currClient, std::vector<std::string> command)
     std::map<std::string, Channel>::iterator it = _channels.find(channelName);
     if (it == _channels.end())
     {
-        sendReply(currClient.getClientFd(), ERR_NOSUCHCHANNEL(currClient.getNickname(), channelName));
+        sendReply(currClient.getClientFd(), ERR_NOSUCHCHANNEL(currClient.getHostName(), currClient.getNickname(), channelName));
         return;
     }
 
