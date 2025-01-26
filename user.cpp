@@ -27,7 +27,7 @@ void sendWelcomeMessages(int client_fd, const Client &client)
     sendReply(client_fd, RPL_WELCOME(
                              user_forma(client.getNickname(), client.getUsername(), client.getHostName()),
                              client.getNickname()));
-    sendReply(client_fd, RPL_YOURHOST(client.getNickname(), "localhost"));
+    sendReply(client_fd, RPL_YOURHOST(client.getNickname(), client.getHostName()));
     sendReply(client_fd, RPL_CREATED(client.getNickname(), "now"));
 }
 

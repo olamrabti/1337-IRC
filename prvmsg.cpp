@@ -18,7 +18,7 @@ void Server::broadcastToChannel(Client &client, const std::string &channel_name,
         std::map<std::string, Client> &clients_in_channel = channel_it->second.getClients();
         if (clients_in_channel.find(client.getNickname()) == clients_in_channel.end())
         {
-            // sendReply(client.getClientFd(), ERR_CANNOTSENDTOCHAN(client.getHostName(), client.getNickname(), channel_name));
+            sendReply(client.getClientFd(), ERR_CANNOTSENDTOCHAN(client.getHostName(), client.getNickname(), channel_name));
             return;
         }
 
@@ -37,7 +37,7 @@ void Server::broadcastToChannel(Client &client, const std::string &channel_name,
     }
 }
 
-void Server::sendToClient(const std::string &target_nick, Client &client, const std::string &message)
+void Server::sendToClient(const std::string &target_nick, Client &client, std::string &message)
 {
     int target_fd = getClientByNickname(target_nick);
     if (target_fd != -1)
@@ -62,6 +62,9 @@ void Server::PrivMsgCommand(Client &client, std::vector<std::string> command, st
     std::string message = command[2];
     if (message[0] == ':')
         message = buffer.substr(buffer.find(':') + 1);
+    message.erase(std::remove(message.begin(), message.end(), ':'), message.end());
+    message.erase(std::remove(message.begin(), message.end(), '\n'), message.end());
+    message.erase(std::remove(message.begin(), message.end(), '\r'), message.end());
     std::string sender_nick = client.getNickname();
     std::vector<std::string> target_list = split(target, ',');
 
@@ -74,7 +77,7 @@ void Server::PrivMsgCommand(Client &client, std::vector<std::string> command, st
             if (channel_it == _channels.end())
                 sendReply(client.getClientFd(), ERR_NOSUCHCHANNEL(client.getHostName(), client.getNickname(), target));
             else if (!channel_it->second.isClientInChannel(sender_nick))
-                sendReply(client.getClientFd(), ERR_NOTONCHANNEL(client.getHostName(), target));
+                sendReply(client.getClientFd(), "Error(442): You're not on that channel");
             else
                 broadcastToChannel(client, target, message);
         }

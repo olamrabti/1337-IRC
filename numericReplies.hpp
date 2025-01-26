@@ -2,16 +2,12 @@
 #define NUMERICREPLIES
 
 #define user_forma(nickname, username, hostname) (":" + nickname + "!" + username + "@" + hostname)
-
 #define ERR_INVITEONLYCHAN(client, channel, hostname) (":" + hostname + " 473 " + client + " " + channel + " :Cannot join channel (+i) - invite only\r\n")
-
 #define RPL_NOTIFYJOIN(client, client_host, channel) (":" + client + "!" + client + "@" + client_host + " JOIN " + channel + "\r\n")
 #define ERR_INVALIDMODEPARAM(client, channel, mode, hostname) (":" + hostname + " 696 " + client + " " + channel + " " + mode + " :Invalid MODE parameter\r\n")
 #define RPL_YOUREOPER(client, hostname) (":" + hostname + " 381 " + client + " :You are now an IRC operator\r\n")
 #define ERR_UMODEUNKNOWNFLAG(client, channel, flag, hostname) (":" + hostname + " 501 " + client + " :Unknown MODE " + flag + "\r\n")
-
 #define RPL_TOPICWHOTIME(client, channel, setter, datetime) (": 333 " + client + " " + channel + " " + setter + " " + datetime + " \r\n")
-
 #define ERR_UNKNOWNCOMMAND(hostname, nick, arg) ":" + hostname + " 421 " + nick + " " + arg + " :Unknown command\r\n"
 #define ERR_NEEDMOREPARAMS(nick, hostname, cmd) ":" + hostname + " 461 " + nick + " " + cmd + " :Not enough parameters\r\n"
 #define ERR_NOSUCHCHANNEL(hostname, nick, channel) ":" + hostname + " 403 " + nick + " " + channel + " :No such channel\r\n"
@@ -59,7 +55,6 @@
 #define RPL_MODE(nick, username, host, target, mode) ":" + nick + "!~" + username + "@" + host + " MODE " + target + " " + mode + "\r\n"
 #define RPL_NOTIFYPART(nick, host, channel, reason) (":" + nick + "!" + host + " PART " + channel + " :" + reason + "\r\n")
 #define ERR_INVALIDKEY(hostname, nick, chann) ":" + hostname + " 696 " + nick + " " + chann + " k * :Invalid key mode parameter. Syntax: <key>.\r\n"
-
 #define RPL_WELCOME(user_forma, nickname) (": 001 " + nickname + " :Welcome " + nickname + " to the Internet Relay Chat " + user_forma + "\r\n")
 #define RPL_YOURHOST(client, localhost) (": 002 " + client + " :Your host is " + localhost + "\r\n")
 #define RPL_CREATED(client, datetime) (": 003 " + client + " :This server was created " + datetime + "\r\n")
