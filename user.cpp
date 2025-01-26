@@ -37,13 +37,13 @@ void Server::UserCommand(int client_fd, std::vector<std::string> command)
     if (currClient.getAuthStatus() != 0x01 && currClient.getAuthStatus() != 0x03)
     {
         if (currClient.getAuthStatus() == 0x07)
-            sendReply(client_fd, ERR_ALREADYREGISTERED(_clients[client_fd].getNickname()));
+            sendReply(client_fd, ERR_ALREADYREGISTERED(_clients[client_fd].getNickname(), _clients[client_fd].getHostName()));
         return;
     }
 
     if (command.size() < 5)
     {
-        sendReply(client_fd, ERR_NEEDMOREPARAMS(_clients[client_fd].getNickname(), "USER"));
+        sendReply(client_fd, ERR_NEEDMOREPARAMS(_clients[client_fd].getNickname(), _clients[client_fd].getHostName(), "USER"));
         return;
     }
 

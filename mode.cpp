@@ -59,7 +59,7 @@ std::vector<std::string> parseModes(const std::string &modes, Client &currClient
             result.push_back((give ? "+" : "-") + std::string(1, modes[i]));
         else
         {
-            sendReply(currClient.getClientFd(), ERR_UMODEUNKNOWNFLAG(currClient.getNickname(), channelName, modes[i]));
+            sendReply(currClient.getClientFd(), ERR_UNKNOWNMODE(currClient.getHostName(), currClient.getNickname(), modes[i]));
             return std::vector<std::string>();
         }
     }
@@ -75,11 +75,11 @@ std::vector<std::string> parseParametres(std::vector<std::string> command)
     return result;
 }
 
-void oModeParam(Channel &currChannel, std::string parameter, std::string mode, Client &currClient)
+void oModeParam(Channel &currChannel, std::string parameter, std::string mode, Client &currClient, std::string _hostname)
 {
     if (parameter.empty())
     {
-        sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), "MODE"));
+        sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), currClient.getHostName(), "MODE"));
         return;
     }
     if (mode == "+o")
@@ -93,14 +93,14 @@ void oModeParam(Channel &currChannel, std::string parameter, std::string mode, C
         }
         if (currChannel.isOperator(parameter))
         {
-            sendReply(currClient.getClientFd(), ERR_INVALIDMODEPARAM(currClient.getNickname(), currChannel.getName(), mode));
+            sendReply(currClient.getClientFd(), ERR_INVALIDMODEPARAM(currClient.getNickname(), currChannel.getName(), mode, currClient.getHostName()));
             return;
         }
         Client &targetClient = it_client->second;
         currChannel.addOperator(parameter);
-        sendReply(targetClient.getClientFd(), RPL_YOUREOPER(targetClient.getNickname()));
+        sendReply(targetClient.getClientFd(), RPL_YOUREOPER(targetClient.getNickname(), currClient.getHostName()));
         sendReply(currClient.getClientFd(), ":" + currClient.getPrefix() + " MODE " + currChannel.getName() + " +o " + parameter + "\r\n");
-        sendReply(currClient.getClientFd(), RPL_CHANNELMODEIS(currClient.getNickname(), currChannel.getName(), mode));
+        sendReply(currClient.getClientFd(), RPL_CHANNELMODEIS(_hostname, currClient.getNickname(), currChannel.getName(), mode));
     }
     else if (mode == "-o")
     {
@@ -113,7 +113,7 @@ void oModeParam(Channel &currChannel, std::string parameter, std::string mode, C
         }
         if (!currChannel.isOperator(parameter))
         {
-            sendReply(currClient.getClientFd(), ERR_CHANOPRIVSNEEDED(currClient.getNickname(), currChannel.getName()));
+            sendReply(currClient.getClientFd(), ERR_CHANOPRIVSNEEDED(currClient.getHostName(), currClient.getNickname(), currChannel.getName()));
             return;
         }
         currChannel.removeOperator(parameter);
@@ -141,7 +141,7 @@ void pluskModeParam(Channel &currChannel, const std::string &parameter, const st
     {
         if (parameter.empty())
         {
-            sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), "MODE"));
+            sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), currClient.getHostName(), "MODE"));
             return;
         }
         currChannel.setKey(parameter);
@@ -173,19 +173,19 @@ void pluslModeParam(Channel &currChannel, const std::string &parameter, const st
     {
         if (parameter.empty())
         {
-            sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), "MODE"));
+            sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), currClient.getHostName(), "MODE"));
             return;
         }
         if (!valideNumber(parameter))
         {
-            sendReply(currClient.getClientFd(), ERR_INVALIDMODEPARAM(currClient.getNickname(), currChannel.getName(), mode));
+            sendReply(currClient.getClientFd(), ERR_INVALIDMODEPARAM(currClient.getNickname(), currChannel.getName(), mode, currClient.getHostName()));
             return;
         }
 
         int limit = ft_atoi(parameter);
         if (limit <= 0)
         {
-            sendReply(currClient.getClientFd(), ERR_INVALIDMODEPARAM(currClient.getNickname(), currChannel.getName(), mode));
+            sendReply(currClient.getClientFd(), ERR_INVALIDMODEPARAM(currClient.getNickname(), currChannel.getName(), mode, currClient.getHostName()));
             return;
         }
 
@@ -208,7 +208,7 @@ void tModeParam(Channel &currChannel, const std::string &mode, Client &currClien
     }
     else
     {
-        sendReply(currClient.getClientFd(), ERR_INVALIDMODEPARAM(currClient.getNickname(), currChannel.getName(), mode));
+        sendReply(currClient.getClientFd(), ERR_INVALIDMODEPARAM(currClient.getNickname(), currChannel.getName(), mode, currClient.getHostName()));
     }
 }
 
@@ -216,14 +216,14 @@ void Server::channelMode(Client &currClient, std::vector<std::string> command)
 {
     if (command.size() < 2)
     {
-        sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), command[0]));
+        sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), currClient.getHostName(), command[0]));
         return;
     }
     std::string channelName = command[1];
     std::map<std::string, Channel>::iterator it = _channels.find(channelName);
     if (command.size() == 2 && it != _channels.end())
     {
-        sendReply(currClient.getClientFd(), RPL_CREATIONTIME(currClient.getNickname(), channelName, it->second.getCreationDate()));
+        sendReply(currClient.getClientFd(), RPL_CREATIONTIME(currClient.getHostName(), currClient.getNickname(), channelName, it->second.getCreationDate()));
         return;
     }
     std::vector<std::string> modes;
@@ -231,7 +231,7 @@ void Server::channelMode(Client &currClient, std::vector<std::string> command)
         modes = parseModes(command[2], currClient);
     if (modes.empty())
     {
-        sendReply(currClient.getClientFd(), ERR_UMODEUNKNOWNFLAG(currClient.getNickname(), channelName, ""));
+        sendReply(currClient.getClientFd(), ERR_UMODEUNKNOWNFLAG(currClient.getNickname(), channelName, "", currClient.getHostName()));
         return;
     }
     std::vector<std::string> parameters = parseParametres(command);
@@ -247,7 +247,7 @@ void Server::channelMode(Client &currClient, std::vector<std::string> command)
 
         if (currChannel.isOperator(currClient.getNickname()) == false)
         {
-            sendReply(currClient.getClientFd(), ERR_CHANOPRIVSNEEDED(currClient.getNickname(), channelName));
+            sendReply(currClient.getClientFd(), ERR_CHANOPRIVSNEEDED(currClient.getHostName(), currClient.getNickname(), channelName));
             return;
         }
         int paramCount = 0;
@@ -257,12 +257,12 @@ void Server::channelMode(Client &currClient, std::vector<std::string> command)
             {
                 if ((int)parameters.size() > paramCount)
                 {
-                    oModeParam(currChannel, parameters[paramCount], modes[i], currClient); //
+                    oModeParam(currChannel, parameters[paramCount], modes[i], currClient, _hostname); //
                     paramCount++;
                 }
                 else
                 {
-                    sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), command[0]));
+                    sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), currClient.getHostName(), command[0]));
                     return;
                 }
             }
@@ -281,7 +281,7 @@ void Server::channelMode(Client &currClient, std::vector<std::string> command)
                     }
                     else
                     {
-                        sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), command[0]));
+                        sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), currClient.getHostName(), command[0]));
                         return;
                     }
                 }
@@ -299,7 +299,7 @@ void Server::channelMode(Client &currClient, std::vector<std::string> command)
                     }
                     else
                     {
-                        sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), command[0]));
+                        sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), currClient.getHostName(), command[0]));
                         return;
                     }
                 }
@@ -312,9 +312,10 @@ void Server::channelMode(Client &currClient, std::vector<std::string> command)
             }
             else
             {
-                sendReply(currClient.getClientFd(), ERR_UMODEUNKNOWNFLAG(currClient.getNickname(), channelName, ""));
+                sendReply(currClient.getClientFd(), ERR_UMODEUNKNOWNFLAG(currClient.getNickname(), channelName, "", _hostname)); // TODO
                 return;
             }
+            // currChannel.broadcastMessage(RPL_MODE(currClient.getNickname(), currClient.getUsername, _hostname, channelName, )); // TODO +lll-l 1 2 3
         }
     }
 }

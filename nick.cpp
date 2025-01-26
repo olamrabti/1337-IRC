@@ -4,12 +4,11 @@ void Server::NickCommand(int client_fd, std::vector<std::string> command)
 {
     if (command.size() < 2)
     {
-        sendReply(client_fd, ERR_NONICKNAMEGIVEN);
+        sendReply(client_fd, ERR_NONICKNAMEGIVEN(_clients[client_fd].getNickname(), _clients[client_fd].getHostName()));
         return;
     }
     Client &currClient = _clients[client_fd];
-    if (currClient.getAuthStatus() != 0x01 && currClient.getAuthStatus() != 0x05 
-        && currClient.getAuthStatus() != 0x07 && currClient.getAuthStatus() != 0x03)
+    if (currClient.getAuthStatus() != 0x01 && currClient.getAuthStatus() != 0x05 && currClient.getAuthStatus() != 0x07 && currClient.getAuthStatus() != 0x03)
         return;
 
     std::string nickname = command[1];

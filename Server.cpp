@@ -1,7 +1,13 @@
 #include "Server.hpp"
-#include <sstream> // TODO might be removed !
 
-Server::Server(int port, std::string password) : _server_fd(-1), _port(port), _password(password), _client_count(1) {}
+Server::Server(int port, std::string password) : _server_fd(-1), _port(port), _password(password), _client_count(1)
+{
+    char hostBuffer[256];
+    if (gethostname(hostBuffer, sizeof(hostBuffer)) == 0)
+        _hostname = hostBuffer;
+    else
+        _hostname = "localhost";
+}
 
 Server::~Server()
 {
@@ -27,7 +33,7 @@ void Server::removeClient(int client_fd)
 
 void Server::cleanup()
 {
-    std::cout << "Cleaning up server resources..." << std::endl;
+    // std::cout << "Cleaning up server resources..." << std::endl;
 
     for (int i = 1; i < _client_count; i++)
         removeClient(fds[i].fd);
@@ -35,7 +41,7 @@ void Server::cleanup()
     if (_server_fd != -1)
     {
         close(_server_fd);
-        std::cout << "Closed server socket." << std::endl; // TODO
+        // std::cout << "Closed server socket." << std::endl; // TODO
     }
 
     _clients.clear();
@@ -83,7 +89,7 @@ void Server::startServer()
     if (listen(_server_fd, 10) < 0)
         throw std::runtime_error("Failed to listen on socket");
 
-    std::cout << "Server is listening on port " << _port << std::endl;
+    // std::cout << "Server is listening on port " << _port << std::endl;
 
     fds[0].fd = _server_fd;
     fds[0].events = POLLIN;
@@ -109,8 +115,8 @@ void Server::handleNewClient()
     fds[_client_count].events = POLLIN;
 
     _client_count++;
-    std::cout << "New client connected!" << std::endl;
-    std::cout << "from: " << client_ip << std::endl;
+    // std::cout << "New client connected!" << std::endl;
+    // std::cout << "from: " << client_ip << std::endl;
 }
 
 void Server::handleClientRequest(int client_fd)
@@ -120,15 +126,13 @@ void Server::handleClientRequest(int client_fd)
 
     if (bytes_read == 0)
     {
-        std::cout << "Client disconnected." << std::endl;
+        // std::cout << "Client disconnected." << std::endl;
         this->removeClient(client_fd);
         return;
     }
     else if (bytes_read < 0)
     {
-        if (errno == EAGAIN || errno == EWOULDBLOCK)
-            std::cout << "another connection from same terminal" << std::endl;
-        else
+        if (errno != EAGAIN && errno != EWOULDBLOCK)
         {
             this->removeClient(client_fd);
             throw std::runtime_error("Error receiving data from client");
@@ -138,7 +142,7 @@ void Server::handleClientRequest(int client_fd)
     {
         buffer[bytes_read] = '\0';
         std::string message(buffer);
-        std::cout << "Received: " << message;
+        // std::cout << "Received: " << message;
         std::vector<std::string> command = split(trimString(message), ' ');
         if (command.empty())
             return;
@@ -147,7 +151,7 @@ void Server::handleClientRequest(int client_fd)
         currClient.setNickFlag(0);
 
         if (command[0] == "PASS")
-            PassCommand(client_fd, command); // TODO currClient here instead of client_fd
+            PassCommand(client_fd, command);
         else if (command[0] == "NICK" && currClient.getAuthStatus() != 0x07)
             NickCommand(client_fd, command);
         else if (command[0] == "USER")
@@ -167,10 +171,9 @@ void Server::handleClientRequest(int client_fd)
             else if (command[0] == "NICK")
                 NickCommand(client_fd, command);
             else if (command[0] == "PRIVMSG")
-                PrivMsgCommand(client_fd, command, message);
+                PrivMsgCommand(currClient, command, message);
             else if (command[0] == "SECBOT")
                 BotCommand(client_fd, command);
-            // else ila kayna chi invalid cmd golih ymchi yt9awd
         }
     }
 }

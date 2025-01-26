@@ -4,7 +4,7 @@ void Server::channelInvite(Client &currClient, std::vector<std::string> command)
 {
     if (command.size() != 3)
     {
-        sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), "INVITE"));
+        sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), currClient.getHostName(), "INVITE"));
         return;
     }
 
@@ -22,7 +22,7 @@ void Server::channelInvite(Client &currClient, std::vector<std::string> command)
 
     if (!currChannel.isOperator(currClient.getNickname()))
     {
-        sendReply(currClient.getClientFd(), ERR_CHANOPRIVSNEEDED(currClient.getNickname(), channelName));
+        sendReply(currClient.getClientFd(), ERR_CHANOPRIVSNEEDED(currClient.getHostName(), currClient.getNickname(),  channelName));
         return;
     }
 
@@ -37,13 +37,13 @@ void Server::channelInvite(Client &currClient, std::vector<std::string> command)
     }
     if (!targetClient)
     {
-        sendReply(currClient.getClientFd(), ERR_NOSUCHNICK(currClient.getNickname(), nickname));
+        sendReply(currClient.getClientFd(), ERR_NOSUCHNICK(currClient.getHostName(), currClient.getNickname(), nickname));
         return;
     }
 
     if (currChannel.isClientInChannel(nickname))
     {
-        sendReply(currClient.getClientFd(), ERR_USERONCHANNEL(currClient.getNickname(), nickname, channelName));
+        sendReply(currClient.getClientFd(), ERR_USERONCHANNEL(currClient.getHostName(), currClient.getNickname(), nickname, channelName));
         return;
     }
 
@@ -54,7 +54,8 @@ void Server::channelInvite(Client &currClient, std::vector<std::string> command)
     }
 
     currChannel.addInvited(nickname);
-    // sendReply(currClient.getClientFd(), RPL_INVITING(currClient.getNickname(), nickname, channelName));//TODO
-    sendReply(currClient.getClientFd(), RPL_INVITESEND(currClient.getNickname(), nickname, channelName));
-    sendReply(targetClient->getClientFd(), RPL_INVITENOTIFY(currClient.getNickname(), nickname, channelName));
+
+    sendReply(currClient.getClientFd(), RPL_INVITING(currClient.getHostName(), currClient.getNickname(), nickname, channelName));
+    currChannel.broadcastMessage(RPL_INVITE(currClient.getNickname(), currClient.getUsername(), targetClient->getHostName(), channelName, nickname));
+
 }

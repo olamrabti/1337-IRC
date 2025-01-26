@@ -10,66 +10,68 @@ void Server::joinCommand(std::string channelName, std::string key, Client &currC
     {
         if (!isValidChannelName(channelName))
         {
-            sendReply(client_fd, ERR_NOSUCHCHANNEL(currClient.getHostName(), currClient.getNickname(), channelName));
+            // sendReply(client_fd, ERR_NOSUCHCHANNEL(currClient.getNickname(), channelName));
             return;
         }
         Channel newChannel(channelName, key);
         newChannel.addClient(currClient);
         newChannel.addOperator(currClient.getNickname());
-        // sendReply(currClient.getClientFd(), RPL_YOUREOPER(currClient.getNickname()));
 
         _channels[channelName] = newChannel;
-        sendReply(client_fd, RPL_NOTIFYJOIN(currClient.getNickname(), currClient.getHostName(), channelName));
+        std::string message = RPL_JOIN(currClient.getNickname(), currClient.getUsername(), channelName, currClient.getAdresseIp());
+        sendReply(currClient.getClientFd(), message);
+        // sendReply(client_fd, RPL_NOTIFYJOIN(currClient.getNickname(), currClient.getHostName(), channelName));
         if (newChannel.getTopic() == "")
-            sendReply(client_fd, RPL_NOTOPIC(currClient.getNickname(), channelName));
+            sendReply(client_fd, RPL_NOTOPIC(currClient.getHostName(), currClient.getNickname(), channelName));
         else
         {
-            sendReply(client_fd, RPL_TOPIC(currClient.getNickname(), channelName, newChannel.getTopic()));
+            sendReply(client_fd, RPL_TOPIC(currClient.getHostName(), currClient.getNickname(), channelName, newChannel.getTopic()));
             sendReply(client_fd, RPL_TOPICWHOTIME(currClient.getNickname(), channelName, newChannel.getTopicSetter(), newChannel.getTopicDdate()));
         }
-        sendReply(client_fd, RPL_NAMREPLY(currClient.getNickname(), channelName, newChannel.getAllUsersNames()));
-        sendReply(client_fd, RPL_ENDOFNAMES(currClient.getNickname(), channelName));
+        sendReply(client_fd, RPL_NAMREPLY(currClient.getHostName(), currClient.getNickname(), channelName, newChannel.getAllUsersNames()));
+        sendReply(client_fd, RPL_ENDOFNAMES(currClient.getHostName(), currClient.getNickname(), channelName));
     }
     else
     {
         Channel &currChannel = it->second;
         if (currChannel.getInviteOnly() && !currChannel.isInvited(currClient.getNickname()))
         {
-            sendReply(client_fd, ERR_INVITEONLYCHAN(currClient.getNickname(), channelName));
+            sendReply(client_fd, ERR_INVITEONLYCHAN(currClient.getNickname(), channelName, currClient.getHostName()));
             return;
         }
 
         if (currChannel.getUserLimit() != 0 && currChannel.getUserCount() >= currChannel.getUserLimit())
         {
-            sendReply(client_fd, ERR_CHANNELISFULL(currClient.getNickname(), channelName));
+            sendReply(client_fd, ERR_CHANNELISFULL(currClient.getHostName(), currClient.getNickname(), channelName));
             return;
         }
 
         if (currChannel.getKey() != key)
         {
-            sendReply(client_fd, ERR_INVALIDKEY(currClient.getNickname(), channelName));
+            sendReply(client_fd, ERR_INVALIDKEY(currClient.getHostName(), currClient.getNickname(), channelName));
             return;
         }
 
         if (currChannel.getClients().find(currClient.getNickname()) != currChannel.getClients().end())
         {
-            sendReply(client_fd, ERR_USERONCHANNEL(currClient.getNickname(), currClient.getNickname(), channelName));
+            sendReply(client_fd, ERR_USERONCHANNEL(currClient.getHostName(), currClient.getHostName(), currClient.getNickname(), channelName));
             return;
         }
 
         currChannel.addClient(currClient);
-        // std::string message = ;
-        // sendReply(client_fd, message);
-        currChannel.broadcastMessage(RPL_NOTIFYJOIN(currClient.getNickname(), currClient.getHostName(), channelName));
+        // RPL_JOIN
+        std::string message = RPL_JOIN(currClient.getNickname(), currClient.getUsername(), channelName, currClient.getAdresseIp());
+        // sendReply(currClient.getClientFd(), message);
+        currChannel.broadcastMessage(message);
         if (currChannel.getTopic() == "")
-            sendReply(client_fd, RPL_NOTOPIC(currClient.getNickname(), channelName));
+            sendReply(client_fd, RPL_NOTOPIC(currClient.getHostName(), currClient.getNickname(), channelName));
         else
         {
-            sendReply(client_fd, RPL_TOPIC(currClient.getNickname(), channelName, currChannel.getTopic()));
+            sendReply(client_fd, RPL_TOPIC(currClient.getHostName(), currClient.getNickname(), channelName, currChannel.getTopic()));
             sendReply(client_fd, RPL_TOPICWHOTIME(currClient.getNickname(), channelName, currChannel.getTopicSetter(), currChannel.getTopicDdate()));
         }
-        sendReply(client_fd, RPL_NAMREPLY(currClient.getNickname(), channelName, currChannel.getAllUsersNames()));
-        sendReply(client_fd, RPL_ENDOFNAMES(currClient.getNickname(), channelName));
+        sendReply(client_fd, RPL_NAMREPLY(currClient.getHostName(), currClient.getNickname(), channelName, currChannel.getAllUsersNames()));
+        sendReply(client_fd, RPL_ENDOFNAMES(currClient.getHostName(), currClient.getNickname(), channelName));
     }
 }
 
@@ -77,13 +79,13 @@ void Server::ChannelJoin(Client &currClient, std::vector<std::string> command)
 {
     if (command.size() < 2)
     {
-        sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), command[0]));
+        sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), currClient.getHostName(), command[0]));
         return;
     }
     std::map<std::string, std::string> tokens = parseJoinCommand(command);
     if (tokens.size() == 0)
     {
-        sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), command[0]));
+        sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), currClient.getHostName(), command[0]));
         return;
     }
 

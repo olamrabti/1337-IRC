@@ -18,7 +18,7 @@ void Server::channelTopic(Client &currClient, std::vector<std::string> command)
 {
     if (command.size() < 2)
     {
-        sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), command[0]));
+        sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), currClient.getHostName() ,command[0]));
         return;
     }
 
@@ -34,15 +34,21 @@ void Server::channelTopic(Client &currClient, std::vector<std::string> command)
 
     Channel &currChannel = it->second;
 
+    if (!currChannel.isClientInChannel(currClient.getNickname()))
+    {
+        sendReply(currClient.getClientFd(), ERR_USERNOTINCHANNEL(currClient.getNickname(), currClient.getNickname() , channelName));
+        return;
+    }
+
     if (command.size() == 2)
     {
         if (currChannel.getTopic().empty())
         {
-            sendReply(currClient.getClientFd(), RPL_NOTOPIC(currClient.getNickname(), channelName));
+            sendReply(currClient.getClientFd(), RPL_NOTOPIC(currClient.getHostName(), currClient.getNickname(), channelName));
         }
         else
         {
-            sendReply(currClient.getClientFd(), RPL_TOPIC(currClient.getNickname(), channelName, currChannel.getTopic()));
+            sendReply(currClient.getClientFd(), RPL_TOPIC(currClient.getHostName(), currClient.getNickname(), channelName, currChannel.getTopic()));
             sendReply(currClient.getClientFd(), RPL_TOPICWHOTIME(currClient.getNickname(), channelName, currChannel.getTopicSetter(), currChannel.getTopicDdate()));
         }
         return;
@@ -50,12 +56,12 @@ void Server::channelTopic(Client &currClient, std::vector<std::string> command)
 
     if (currChannel.getTopicLock() && !currChannel.isOperator(currClient.getNickname()))
     {
-        sendReply(currClient.getClientFd(), ERR_CHANOPRIVSNEEDED(currClient.getNickname(), channelName));
+        sendReply(currClient.getClientFd(), ERR_CHANOPRIVSNEEDED(currClient.getHostName(), currClient.getNickname(),  channelName));
         return;
     }
 
     currChannel.setTopic(newTopic);
     currChannel.setTopicDate(getCurrTime());
     currChannel.setTopicSetter(currClient.getNickname());
-    currChannel.broadcastMessage(RPL_TOPIC(currClient.getNickname(), channelName, newTopic));
+    currChannel.broadcastMessage(RPL_TOPIC(currClient.getHostName(), currClient.getNickname(), channelName, newTopic));
 }
