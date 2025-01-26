@@ -26,7 +26,7 @@ void Server::broadcastToChannel(Client &client, const std::string &channel_name,
         {
             if (client_it->first != client.getNickname())
             {
-                std::string formatted_msg = PRIVMSG_FORMAT(client.getNickname(), client.getUsername(), client.getHostName(), client_it->first, message);
+                std::string formatted_msg = PRIVMSG_FORMAT(client.getNickname(), client.getUsername(), client.getHostName(), channel_name, message);
                 sendReply(client_it->second.getClientFd(), formatted_msg);
             }
         }
@@ -62,22 +62,22 @@ void Server::PrivMsgCommand(Client &client, std::vector<std::string> command, st
     std::string message = command[2];
     if (message[0] == ':')
         message = buffer.substr(buffer.find(':') + 1);
-    message.erase(std::remove(message.begin(), message.end(), ':'), message.end());
     message.erase(std::remove(message.begin(), message.end(), '\n'), message.end());
     message.erase(std::remove(message.begin(), message.end(), '\r'), message.end());
+
     std::string sender_nick = client.getNickname();
     std::vector<std::string> target_list = split(target, ',');
 
     for (size_t i = 0; i < target_list.size(); ++i)
     {
         std::string target = target_list[i];
-        if (target[0] == '#')
+        if (target[0] == '#' || target[0] == '&')
         {
             std::map<std::string, Channel>::iterator channel_it = _channels.find(target);
             if (channel_it == _channels.end())
                 sendReply(client.getClientFd(), ERR_NOSUCHCHANNEL(client.getHostName(), client.getNickname(), target));
             else if (!channel_it->second.isClientInChannel(sender_nick))
-                sendReply(client.getClientFd(), "Error(442): You're not on that channel");
+                sendReply(client.getClientFd(), ERR_CANNOTSENDTOCHAN(client.getHostName(), client.getNickname(), target));
             else
                 broadcastToChannel(client, target, message);
         }
