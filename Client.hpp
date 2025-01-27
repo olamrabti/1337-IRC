@@ -18,6 +18,7 @@ private:
 	int _nickFlag;
 
 public:
+	std::string _buffer;
 	Client(void);
 	Client(std::string nickname);
 	Client(int fd);

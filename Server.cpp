@@ -144,27 +144,24 @@ void Server::handleClientRequest(int client_fd)
             buffer[bytes_read - 1] = '\0';
         else
             buffer[bytes_read] = '\0';
-        std::string message;
-        message.append(buffer, bytes_read);
 
         Client &currClient = _clients[client_fd];
-        // currClient.appendToBuffer(message);
-        // std::string &client_buffer = currClient.getBuffer();
-        size_t pos;
-        std::cout << "Received 1 : " << message;
+        currClient._buffer.append(buffer, bytes_read);
 
-        while (((pos = message.find("\r\n")) != std::string::npos) || ((pos = message.find("\n")) != std::string::npos))
+        size_t pos;
+        std::cout << "Received 1 : " << currClient._buffer;
+
+        while (((pos = currClient._buffer.find("\r\n")) != std::string::npos) || ((pos = currClient._buffer.find("\n")) != std::string::npos))
         {
-            if (message.empty())
+            if (currClient._buffer.empty())
                 break;
-            std::string command_str = message.substr(0, pos + 2);
-            message.erase(0, pos + 2);
+            std::string command_str = currClient._buffer.substr(0, pos + 2);
+            currClient._buffer.erase(0, pos + 2);
 
             std::vector<std::string> command = split(trimString(command_str), ' ');
             if (command.size() < 1)
                 continue;
             std::cout << "Received: " << command_str << std::endl;
-            // std::vector<std::string> command = split(trimString(message), ' ');
 
             currClient.setNickFlag(0);
 
@@ -189,7 +186,7 @@ void Server::handleClientRequest(int client_fd)
                 else if (command[0] == "NICK")
                     NickCommand(client_fd, command);
                 else if (command[0] == "PRIVMSG")
-                    PrivMsgCommand(currClient, command, message);
+                    PrivMsgCommand(currClient, command, command_str);
                 else if (command[0] == "SECBOT")
                     BotCommand(client_fd, command);
             }

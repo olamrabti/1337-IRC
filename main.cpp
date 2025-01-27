@@ -23,8 +23,8 @@ std::pair<int, std::string> parse_args(char **av)
     if (port != static_cast<int>(port))
         throw std::invalid_argument("Port must be an integer.");
 
-    if (port < 1 || port > 65535)
-        throw std::invalid_argument("Port must be in the range 1–65535.");
+    if (port < 1024 || port > 65535)
+        throw std::invalid_argument("Port must be in the range 1024–65535.");
 
     params.first = static_cast<int>(port);
 
