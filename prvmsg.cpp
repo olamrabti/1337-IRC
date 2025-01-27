@@ -55,7 +55,7 @@ void Server::PrivMsgCommand(Client &client, std::vector<std::string> command, st
 {
     if (command.size() < 3)
     {
-        sendReply(client.getClientFd(), ERR_NEEDMOREPARAMS(client.getNickname(), client.getHostName(), "PRIVMSG"));
+        sendReply(client.getClientFd(), ERR_NEEDMOREPARAMS(_hostname, client.getNickname(), "PRIVMSG"));
         return;
     }
     std::string target = command[1];

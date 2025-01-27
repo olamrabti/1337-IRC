@@ -140,40 +140,59 @@ void Server::handleClientRequest(int client_fd)
     }
     else
     {
-        buffer[bytes_read] = '\0';
-        std::string message(buffer);
-        // std::cout << "Received: " << message;
-        std::vector<std::string> command = split(trimString(message), ' ');
-        if (command.empty())
-            return;
+        if (bytes_read >= 1024)
+            buffer[bytes_read - 1] = '\0';
+        else
+            buffer[bytes_read] = '\0';
+        std::string message;
+        message.append(buffer, bytes_read);
 
         Client &currClient = _clients[client_fd];
-        currClient.setNickFlag(0);
+        // currClient.appendToBuffer(message);
+        // std::string &client_buffer = currClient.getBuffer();
+        size_t pos;
+        std::cout << "Received 1 : " << message;
 
-        if (command[0] == "PASS")
-            PassCommand(client_fd, command);
-        else if (command[0] == "NICK" && currClient.getAuthStatus() != 0x07)
-            NickCommand(client_fd, command);
-        else if (command[0] == "USER")
-            UserCommand(client_fd, command);
-        else if (currClient.isFullyAuthenticated())
+        while (((pos = message.find("\r\n")) != std::string::npos) || ((pos = message.find("\n")) != std::string::npos))
         {
-            if (command[0] == "JOIN")
-                ChannelJoin(currClient, command);
-            else if (command[0] == "MODE")
-                channelMode(currClient, command);
-            else if (command[0] == "KICK")
-                channelKick(currClient, command);
-            else if (command[0] == "TOPIC")
-                channelTopic(currClient, command);
-            else if (command[0] == "INVITE")
-                channelInvite(currClient, command);
-            else if (command[0] == "NICK")
+            if (message.empty())
+                break;
+            std::string command_str = message.substr(0, pos + 2);
+            message.erase(0, pos + 2);
+
+            std::vector<std::string> command = split(trimString(command_str), ' ');
+            if (command.size() < 1)
+                continue;
+            std::cout << "Received: " << command_str << std::endl;
+            // std::vector<std::string> command = split(trimString(message), ' ');
+
+            currClient.setNickFlag(0);
+
+            if (command[0] == "PASS")
+                PassCommand(client_fd, command);
+            else if (command[0] == "NICK" && currClient.getAuthStatus() != 0x07)
                 NickCommand(client_fd, command);
-            else if (command[0] == "PRIVMSG")
-                PrivMsgCommand(currClient, command, message);
-            else if (command[0] == "SECBOT")
-                BotCommand(client_fd, command);
+            else if (command[0] == "USER")
+                UserCommand(client_fd, command);
+            else if (currClient.isFullyAuthenticated())
+            {
+                if (command[0] == "JOIN")
+                    ChannelJoin(currClient, command);
+                else if (command[0] == "MODE")
+                    channelMode(currClient, command);
+                else if (command[0] == "KICK")
+                    channelKick(currClient, command);
+                else if (command[0] == "TOPIC")
+                    channelTopic(currClient, command);
+                else if (command[0] == "INVITE")
+                    channelInvite(currClient, command);
+                else if (command[0] == "NICK")
+                    NickCommand(client_fd, command);
+                else if (command[0] == "PRIVMSG")
+                    PrivMsgCommand(currClient, command, message);
+                else if (command[0] == "SECBOT")
+                    BotCommand(client_fd, command);
+            }
         }
     }
 }

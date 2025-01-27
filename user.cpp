@@ -1,6 +1,6 @@
 #include "Server.hpp"
 
-void sendWelcomeMessages(int client_fd, const Client &client)
+void Server::sendWelcomeMessages(int client_fd, const Client &client)
 {
     const char *CYAN = "\033[1;96m";
     const char *WHITE = "\033[1;97m";
@@ -24,11 +24,12 @@ void sendWelcomeMessages(int client_fd, const Client &client)
 
     sendReply(client_fd, welcome_msg);
 
-    sendReply(client_fd, RPL_WELCOME(
-                             user_forma(client.getNickname(), client.getUsername(), client.getHostName()),
-                             client.getNickname()));
-    sendReply(client_fd, RPL_YOURHOST(client.getNickname(), client.getHostName()));
-    sendReply(client_fd, RPL_CREATED(client.getNickname(), "now"));
+    sendReply(client_fd, RPL_WELCOME(_hostname, client.getNickname(), client.getUsername(), client.getHostName()));
+    // sendReply(client_fd, RPL_WELCOME(
+    //                          user_forma(client.getNickname(), client.getUsername(), client.getHostName()),
+    //                          client.getNickname()));
+    sendReply(client_fd, RPL_YOURHOST(_hostname, client.getNickname(), _hostname, "1.0"));
+    sendReply(client_fd, RPL_CREATED(_hostname, client.getNickname(), "now"));
 }
 
 void Server::UserCommand(int client_fd, std::vector<std::string> command)

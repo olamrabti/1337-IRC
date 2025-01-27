@@ -2,7 +2,7 @@
 #define NUMERICREPLIES
 
 #define user_forma(nickname, username, hostname) (":" + nickname + "!" + username + "@" + hostname)
-#define ERR_INVITEONLYCHAN(client, channel, hostname) (":" + hostname + " 473 " + client + " " + channel + " :Cannot join channel (+i) - invite only\r\n")
+// #define ERR_INVITEONLYCHAN(client, channel, hostname) (":" + hostname + " 473 " + client + " " + channel + " :Cannot join channel (+i) - invite only\r\n")
 #define RPL_NOTIFYJOIN(client, client_host, channel) (":" + client + "!" + client + "@" + client_host + " JOIN " + channel + "\r\n")
 #define ERR_INVALIDMODEPARAM(client, channel, mode, hostname) (":" + hostname + " 696 " + client + " " + channel + " " + mode + " :Invalid MODE parameter\r\n")
 #define RPL_YOUREOPER(client, hostname) (":" + hostname + " 381 " + client + " :You are now an IRC operator\r\n")
@@ -45,7 +45,7 @@
 #define RPL_CHANNELMODES(hostname, channelName, nick, channelmode) ":" + hostname + " 324 " + nick + " " + channelName + " " + channelmode + "\r\n"
 #define RPL_INVITE(nick, username, clienthostname, channel, nick2) ":" + nick + "!~" + username + "@" + clienthostname + " INVITE " + nick2 + " " + channel + "\r\n"
 // #define PRIVMSG_FORMAT(senderNick, senderUsername, senderHostname, receiver, message) ":" + senderNick + "!~" + senderUsername + "@" + senderHostname + " PRIVMSG " + receiver + " :" + message + "\r\n"
-#define PRIVMSG_FORMAT(sender_nick, sender_username, sender_hostname, receiver, message) (":" + sender_nick + "!" + sender_username + "@" + sender_hostname + " PRIVMSG " + receiver + " :" + message + "\r\n")
+#define PRIVMSG_FORMAT(sender_nick, sender_username, sender_hostname, receiver, message) (":" + sender_nick + "!~" + sender_username + "@" + sender_hostname + " PRIVMSG " + receiver + " :" + message + "\r\n")
 #define RPL_QUIT(nick, host, message) ":" + nick + "!" + "~" + nick + "@" + host + " QUIT : " + message + "\r\n"
 #define ERR_NOTEXTTOSEND(nick, hostname) ":" + hostname + " 412 " + nick + " :No text to send\r\n"
 #define RPL_KICK(nick, username, hostname, kicked, channel, reason) ":" + nick + "!~" + username + "@" + hostname + " KICK " + channel + " " + kicked + " :" + reason + "\r\n"
@@ -56,9 +56,19 @@
 #define RPL_MODE(nick, username, host, target, mode) ":" + nick + "!~" + username + "@" + host + " MODE " + target + " " + mode + "\r\n"
 #define RPL_NOTIFYPART(nick, host, channel, reason) (":" + nick + "!" + host + " PART " + channel + " :" + reason + "\r\n")
 #define ERR_INVALIDKEY(hostname, nick, chann) ":" + hostname + " 696 " + nick + " " + chann + " k * :Invalid key mode parameter. Syntax: <key>.\r\n"
-#define RPL_WELCOME(user_forma, nickname) (": 001 " + nickname + " :Welcome " + nickname + " to the Internet Relay Chat " + user_forma + "\r\n")
-#define RPL_YOURHOST(client, hostname) (": 002 " + client + " :Your host is " + hostname + "\r\n")
-#define RPL_CREATED(client, datetime) (": 003 " + client + " :This server was created " + datetime + "\r\n")
-// #define RPL_MYINFO(client, servername, version, user_modes, chan_modes, chan_param_modes) (":localhost 004 " + client + " " + servername + " " + version + " " + user_modes + " " + chan_modes + " " + chan_param_modes + "\r\n")
+// #define RPL_WELCOME(user_forma, nickname) (": 001 " + nickname + " :Welcome " + nickname + " to the Internet Relay Chat " + user_forma + "\r\n")
+// #define RPL_YOURHOST(client, hostname) (": 002 " + client + " :Your host is " + hostname + "\r\n")
+// #define RPL_CREATED(client, datetime) (": 003 " + client + " :This server was created " + datetime + "\r\n")
+// // #define RPL_MYINFO(client, servername, version, user_modes, chan_modes, chan_param_modes) (":localhost 004 " + client + " " + servername + " " + version + " " + user_modes + " " + chan_modes + " " + chan_param_modes + "\r\n")
 #define RPL_MYINFO(hostname, nickname, servername, version, user_modes, chan_modes, chan_param_modes) (":" + hostname + " 004 " + nickname + " " + servername + " " + version + " " + user_modes + " " + chan_modes + " " + chan_param_modes + "\r\n")
+
+// RPL_WELCOME (001)
+#define RPL_WELCOME(server_host, nickname, username, client_host) ":" + server_host + " 001 " + nickname + " :Welcome to the Internet Relay Network " + nickname + "!" + username + "@" + client_host + "\r\n"
+
+// RPL_YOURHOST (002)
+#define RPL_YOURHOST(server_host, client, server_name, version) ":" + server_host + " 002 " + client + " :Your host is " + server_name + ", running version " + version + "\r\n"
+
+// RPL_CREATED (003)
+#define RPL_CREATED(server_host, client, datetime) ":" + server_host + " 003 " + client + " :This server was created " + datetime + "\r\n"
+#define ERR_INVITEONLYCHAN(client, channel) (":localhost 473 " + client + " " + channel + " :Cannot join channel (+i) - invite only\r\n")
 #endif
