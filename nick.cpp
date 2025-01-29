@@ -1,11 +1,10 @@
 #include "Server.hpp"
-
+// add     void broadcastNickChange(Client &client, const std::string &oldNick, const std::string &newNick); to Server.hpp
 
 void Server::broadcastNickChange(Client &client, const std::string &oldNick, const std::string &newNick)
 {
     std::string message = ":" + oldNick + "!" + client.getUsername() + "@" + client.getHostName() + " NICK :" + newNick + "\r\n";
 
-    // Broadcast to all clients
     for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
     {
         if (it->second.getClientFd() != client.getClientFd())
