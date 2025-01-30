@@ -1,14 +1,11 @@
 #include "Client.hpp"
-#include <unistd.h>
 
-Client::Client(void) : _authStatus(0) {}
+Client::Client(void) : _authStatus(0), _nickFlag(0) {}
 
-Client::Client(std::string nickname) : _nickname(nickname), _authStatus(0) {}
+Client::Client(std::string nickname) : _nickname(nickname), _authStatus(0), _nickFlag(0) {}
 
-Client::Client(int fd)
+Client::Client(int fd) : _client_fd(fd), _authStatus(0), _nickFlag(0)
 {
-    _client_fd = fd;
-    _authStatus = 0;
     _nickname = "";
     _username = "";
     char hostBuffer[256];
@@ -103,6 +100,7 @@ std::string Client::getPrefix() const
 {
     return _nickname + "!" + _username + "@" + _hostname;
 }
+
 int Client::getNickFlag() const
 {
     return _nickFlag;
