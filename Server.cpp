@@ -163,8 +163,6 @@ void Server::handleClientRequest(int client_fd)
                 continue;
             std::cout << "Received: " << command_str << std::endl;
 
-            currClient.setNickFlag(0);
-
             if (command[0] == "PASS")
                 PassCommand(client_fd, command);
             else if (command[0] == "NICK" && currClient.getAuthStatus() != 0x07)
