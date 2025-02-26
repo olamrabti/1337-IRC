@@ -6,7 +6,7 @@ bool isValidChannelName(const std::string &name)
 {
 	if (name.empty() || (name[0] != '#' && name[0] != '&'))
 		return false;
-	if (name.find(' ') != std::string::npos || name.find(',') != std::string::npos)
+	if (name.find(',') != std::string::npos)
 		return false;
 	return name.length() <= 200;
 }
@@ -24,7 +24,7 @@ Channel::Channel(const std::string &name, const std::string &key)
 	_topic = "";
 	_key = key;
 	_userLimit = 0;
-	_inviteOnly = false; // TODO
+	_inviteOnly = false;
 	_topicLock = false;
 	_creationDate = getCurrTime();
 }
@@ -34,12 +34,15 @@ Channel::~Channel(void) {}
 std::vector<std::string> split(const std::string &str, char delimiter)
 {
 	std::vector<std::string> tokens;
-	std::stringstream ss(str);
-	std::string token;
-	while (std::getline(ss, token, delimiter))
+	size_t start = 0;
+	size_t end = str.find(delimiter);
+	while (end != std::string::npos)
 	{
-		tokens.push_back(token);
+		tokens.push_back(str.substr(start, end - start));
+		start = end + 1;
+		end = str.find(delimiter, start);
 	}
+	tokens.push_back(str.substr(start));
 	return tokens;
 }
 
@@ -70,30 +73,40 @@ std::string trimString(const std::string &input)
 		i++;
 	}
 
-	if (!result.empty() && isspace(result.back()))
-		result.pop_back();
+	if (!result.empty() && isspace(result[result.size() - 1]))
+		result.erase(result.size() - 1);
 
 	return result;
 }
+
 
 std::map<std::string, std::string> parseJoinCommand(std::vector<std::string> command)
 {
 	std::map<std::string, std::string> tokens;
 	std::vector<std::string> keys;
 	std::vector<std::string> channelsNames;
-	if (command.size() == 2 || command.size() == 3)
+
+	if (command.size() >= 2)
 	{
-		std::vector<std::string> channelsNames = split(command[1], ',');
-		// if (command.size() == 3) // TODO
-		std::vector<std::string> keys = split(command[2], ',');
+		channelsNames = split(command[1], ',');
+		if (command.size() >= 3)
+		{
+			keys = split(command[2], ',');
+		}
+
 		for (size_t i = 0; i < channelsNames.size(); i++)
 		{
-			if (i < keys.size())
+			if (i < keys.size() && !keys[i].empty())
+			{
 				tokens[channelsNames[i]] = keys[i];
+			}
 			else
+			{
 				tokens[channelsNames[i]] = "";
+			}
 		}
 	}
+
 	return tokens;
 }
 
@@ -112,25 +125,25 @@ const std::string &Channel::getKey(void) const
 	return _key;
 }
 
-std::map<std::string, Client> &Channel::getClients(void)
+std::vector<int> &Channel::getClients(void)
 {
-	return _clients;
+	return _channelClients;
 }
 
-bool Channel::removeClient(const std::string &nickname)
+bool Channel::removeClientFromChannel(int client_fd)
 {
-	std::map<std::string, Client>::iterator it = _clients.find(nickname);
-	if (it != _clients.end())
-	{
-		_clients.erase(it);
-		if (_operators.find(nickname) != _operators.end())
-			_operators.erase(nickname);
-		return true;
-	}
-	return false;
+    for (std::vector<int>::iterator it = _channelClients.begin(); it != _channelClients.end(); ++it)
+    {
+        if (*it == client_fd)
+        {
+            _channelClients.erase(it);
+            return true;
+        }
+    }
+    return false;
 }
 
-void Channel::setTopic(const std::string &topic) // TODO
+void Channel::setTopic(const std::string &topic)
 {
 	_topic = topic;
 }
@@ -155,19 +168,9 @@ void Channel::setTopicLock(bool status)
 	_topicLock = status;
 }
 
-bool Channel::addClient(Client &client)
+void Channel::addClient(int client_fd)
 {
-	std::map<std::string, Client>::iterator it;
-	it = _clients.find(client.getNickname());
-	if (it == _clients.end())
-	{
-		_clients[client.getNickname()] = client;
-
-		if (isInvited(client.getNickname()))
-			_invited.erase(client.getNickname());
-		return true;
-	}
-	return false;
+	_channelClients.push_back(client_fd);
 }
 
 bool Channel::verifyKey(const std::string &key) const
@@ -175,10 +178,6 @@ bool Channel::verifyKey(const std::string &key) const
 	return _key == key;
 }
 
-size_t Channel::getUserCount(void) const
-{
-	return _clients.size();
-}
 
 size_t Channel::getUserLimit(void) const
 {
@@ -195,56 +194,62 @@ bool Channel::getTopicLock(void) const
 	return _topicLock;
 }
 
-std::set<std::string> Channel::getOperators(void) const
+std::set<int> Channel::getOperators(void) const
 {
 	return _operators;
 }
 
-std::set<std::string> Channel::getInvited(void) const
+std::set<int> Channel::getInvited(void) const
 {
 	return _invited;
 }
 
-void Channel::addOperator(const std::string &nickname)
+void Channel::addOperator(int client_fd)
 {
-	_operators.insert(nickname); // TODO : Check if this is correct
+	_operators.insert(client_fd);
 }
 
-void Channel::removeOperator(const std::string &nickname)
+void Channel::removeOperator(int client_fd)
 {
-	std::set<std::string>::iterator it;
-	it = _operators.find(nickname);
+	std::set<int>::iterator it;
+	it = _operators.find(client_fd);
 	if (it != _operators.end())
 		_operators.erase(it);
 }
 
-void Channel::addInvited(const std::string &nickname)
+void Channel::addInvited(int client_fd)
 {
-	_invited.insert(nickname);
+	_invited.insert(client_fd);
 }
 
-bool Channel::isInvited(const std::string &nickname) const
+bool Channel::isInvited(int client_fd) const
 {
-	std::set<std::string>::iterator it;
-	it = _invited.find(nickname);
+	std::set<int>::iterator it;
+	it = _invited.find(client_fd);
 	if (it == _invited.end())
 		return false;
 	return true;
 }
 
-bool Channel::isOperator(const std::string &nickname) const
+bool Channel::isOperator(int client_fd) const
 {
-	std::set<std::string>::iterator it;
-	it = _operators.find(nickname);
+	std::set<int>::iterator it;
+	it = _operators.find(client_fd);
 	if (it != _operators.end())
 		return true;
 	return false;
 }
 
-void Channel::broadcastMessage(std::string message)
+void Channel::broadcastMessage(std::string message, std::map<int, Client>& _clients)
 {
-	for (std::map<std::string, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
-		sendReply(it->second.getClientFd(), message);
+	for (size_t i = 0; i < _channelClients.size(); i++)
+	{
+		int client_fd = _channelClients[i];
+
+        std::map<int, Client>::iterator it = _clients.find(client_fd);
+        if (it != _clients.end())
+			sendReply(client_fd, message);
+	}
 }
 
 std::string Channel::getCreationDate(void) const
@@ -276,27 +281,51 @@ void Channel::setTopicSetter(std::string client)
 	_topicSetter = client;
 }
 
-std::string Channel::getAllUsersNames(void)
+std::string Channel::getAllUsersNames(std::map<int, Client>& _clients)
 {
-	std::string result = "";
+    std::string result;
 
-	for (std::map<std::string, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
-	{
-		if (isOperator(it->first))
-			result += "@" + it->first + " ";
-		else
-			result += it->first + " ";
-	}
-	return result;
+    for (size_t i = 0; i < _channelClients.size(); i++)
+    {
+        int client_fd = _channelClients[i];
+
+        std::map<int, Client>::iterator it = _clients.find(client_fd);
+        if (it == _clients.end())
+            continue;
+
+        if (isOperator(client_fd))
+            result += "@" + it->second.getNickname() + " ";
+        else
+            result += it->second.getNickname() + " ";
+    }
+
+    return result;
 }
 
-bool Channel::isClientInChannel(std::string nickname)
+bool Channel::isClientInChannel(int client_fd)
 {
-	std::map<std::string, Client>::iterator it_client;
-	for (it_client = _clients.begin(); it_client != _clients.end(); ++it_client)
-	{
-		if (it_client->second.getNickname() == nickname)
-			return true;
-	}
-	return false;
+    return std::find(_channelClients.begin(), _channelClients.end(), client_fd) != _channelClients.end();
+}
+
+
+std::string Channel::getChannelModes()
+{
+    std::string modes = "+";
+
+    if (_inviteOnly)
+        modes += "i";
+    if (_topicLock)
+        modes += "t";
+    if (!_key.empty())
+        modes += "k";
+    if (_userLimit > 0)
+        modes += "l";
+
+    return modes;
+}
+
+
+size_t Channel::getUserCount(void) const
+{
+	return _channelClients.size();
 }

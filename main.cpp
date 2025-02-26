@@ -1,6 +1,5 @@
 
 #include "Server.hpp"
-
 std::pair<int, std::string> parse_args(char **av)
 {
     std::pair<int, std::string> params;
@@ -24,11 +23,18 @@ std::pair<int, std::string> parse_args(char **av)
         throw std::invalid_argument("Port must be an integer.");
 
     if (port < 1024 || port > 65535)
-        throw std::invalid_argument("Port must be in the range 1024–65535.");
+        throw std::invalid_argument("Port must be in the range 1–65535.");
 
     params.first = static_cast<int>(port);
 
     std::string password = av[2];
+    int i = 0;
+    while (password[i])
+    {
+        if (!isalnum(password[i]))
+            throw std::invalid_argument("Password is invalid try alpha numeric characters");
+        i++;
+    }
     if (password.empty())
         throw std::invalid_argument("Password cannot be empty.");
 
@@ -39,15 +45,14 @@ std::pair<int, std::string> parse_args(char **av)
 
 int main(int ac, char **av)
 {
+    signal(SIGPIPE, SIG_IGN);
     if (ac != 3)
     {
         std::cerr << "Usage: ./ircserv <port> <password>" << std::endl;
         return 1;
     }
-
     try
     {
-        // Parse and validate arguments
         std::pair<int, std::string> params = parse_args(av);
         Server IRC(params.first, params.second);
         IRC.run();

@@ -3,9 +3,9 @@
 
 void webPath(Client &client, int client_fd, std::string server_hostname)
 {
-    std::string sender = "~SECBOT";
-    
-    const char* messages[] = {
+    std::string sender = "SECBOT";
+
+    const char *messages[] = {
         "✦ SECBOT Web Application Security Learning Path ✦",
         "",
         "【Core Learning Platforms】",
@@ -91,12 +91,13 @@ void webPath(Client &client, int client_fd, std::string server_hostname)
         "• Nuclei",
         "",
         "Reminder: Always follow platform rules and practice ethically.",
-        "Tip: Take detailed notes and document your learning journey!"
-    };
-    
+        "Tip: Take detailed notes and document your learning journey!",
+        ">>> TYPE 'BACK' TO RETURN TO THE PREVIOUS PAGE. <<< "};
+
     size_t numMessages = sizeof(messages) / sizeof(messages[0]);
-    
-    for (size_t i = 0; i < numMessages; ++i) {
+
+    for (size_t i = 0; i < numMessages; ++i)
+    {
         std::string line = messages[i];
         std::string formatted_msg = PRIVMSG_FORMAT(sender, sender, server_hostname, client.getNickname(), line + "\r\n");
         sendReply(client_fd, formatted_msg);
@@ -105,9 +106,9 @@ void webPath(Client &client, int client_fd, std::string server_hostname)
 
 void forPath(Client &client, int client_fd, std::string server_hostname)
 {
-    std::string sender = "~SECBOT";
-    
-    const char* messages[] = {
+    std::string sender = "SECBOT";
+
+    const char *messages[] = {
         "✦ SECBOT Digital Forensics & Incident Response Path ✦",
         "",
         "【Core Learning Platforms】",
@@ -200,12 +201,15 @@ void forPath(Client &client, int client_fd, std::string server_hostname)
         "• Log File Analysis",
         "",
         "Tip: Build your own forensics lab for practice!",
-        "Reminder: Always maintain proper chain of custody in real investigations."
+        "Reminder: Always maintain proper chain of custody in real investigations.",
+        ">>> TYPE 'BACK' TO RETURN TO THE PREVIOUS PAGE. <<< "
+
     };
-    
+
     size_t numMessages = sizeof(messages) / sizeof(messages[0]);
-    
-    for (size_t i = 0; i < numMessages; ++i) {
+
+    for (size_t i = 0; i < numMessages; ++i)
+    {
         std::string line = messages[i];
         std::string formatted_msg = PRIVMSG_FORMAT(sender, sender, server_hostname, client.getNickname(), line + "\r\n");
         sendReply(client_fd, formatted_msg);
@@ -214,9 +218,9 @@ void forPath(Client &client, int client_fd, std::string server_hostname)
 
 void pwnPath(Client client, int client_fd, std::string server_hostname)
 {
-    std::string sender = "~SECBOT";
-    
-    const char* messages[] = {
+    std::string sender = "SECBOT";
+
+    const char *messages[] = {
         "✦ SECBOT Binary Exploitation & Reverse Engineering Path ✦",
         "",
         "【Core Learning Resources】",
@@ -288,12 +292,15 @@ void pwnPath(Client client, int client_fd, std::string server_hostname)
         "• Hacking: The Art of Exploitation",
         "",
         "Tip: Build a dedicated Linux VM for practice!",
-        "Reminder: Always practice ethically and legally."
+        "Reminder: Always practice ethically and legally.",
+        ">>> TYPE 'BACK' TO RETURN TO THE PREVIOUS PAGE. <<< "
+
     };
-    
+
     size_t numMessages = sizeof(messages) / sizeof(messages[0]);
-    
-    for (size_t i = 0; i < numMessages; ++i) {
+
+    for (size_t i = 0; i < numMessages; ++i)
+    {
         std::string line = messages[i];
         std::string formatted_msg = PRIVMSG_FORMAT(sender, sender, server_hostname, client.getNickname(), line + "\r\n");
         sendReply(client_fd, formatted_msg);
@@ -302,8 +309,8 @@ void pwnPath(Client client, int client_fd, std::string server_hostname)
 
 void windowsPentestPath(Client &client, int client_fd, std::string server_hostname)
 {
-    std::string sender = "~SECBOT" ;
-    const char* messages[] = {
+    std::string sender = "SECBOT";
+    const char *messages[] = {
         "✦ SECBOT Windows Penetration Testing Learning Path ✦",
         "",
         "【Core Learning Platforms】",
@@ -365,10 +372,48 @@ void windowsPentestPath(Client &client, int client_fd, std::string server_hostna
         "• Bloodhound",
         "",
         "Reminder: Always practice in controlled environments.",
-        "Tip: Build a home lab for safe practice!"
-        };
+        "Tip: Build a home lab for safe practice!",
+        ">>> TYPE 'BACK' TO RETURN TO THE PREVIOUS PAGE. <<< "};
     size_t numMessages = sizeof(messages) / sizeof(messages[0]);
-    for (size_t i = 0; i < numMessages; ++i) {
+    for (size_t i = 0; i < numMessages; ++i)
+    {
+        std::string line = messages[i];
+        std::string formatted_msg = PRIVMSG_FORMAT(sender, sender, server_hostname, client.getNickname(), line + "\r\n");
+        sendReply(client_fd, formatted_msg);
+    }
+}
+void defaultAnswer(Client &client, int client_fd, std::string server_hostname)
+{
+    std::string sender = "SECBOT";
+    const char *messages[] = {
+        "✦ Welcome to SECBOT - Your Security Learning Assistant! ✦",
+        "【Available Learning Paths】",
+        "",
+        "⚡ FOR - Digital Forensics & Incident Response",
+        "   Investigate security incidents, perform malware analysis, and master evidence collection",
+        "   Skills: Memory forensics, Network forensics, Malware analysis, Chain of custody",
+        "",
+        "⚡ WEB - Web Application Security",
+        "   Learn to identify, exploit, and secure web applications against common threats",
+        "   Skills: OWASP Top 10, XSS, SQLi, Authentication bypasses, API security",
+        "",
+        "⚡ PWN - Binary Exploitation & Reverse Engineering",
+        "   Master low-level security, exploit development, and binary analysis",
+        "   Skills: Assembly, Buffer overflows, ROP chains, Debuggers, Disassemblers",
+        "",
+        "⚡ WIN - Windows Systems Penetration Testing",
+        "   Active Directory, PowerShell, Windows privileges, Service exploits",
+        "",
+        "Usage: SECBOT <path>",
+        "Examples:",
+        "  SECBOT FOR - Shows forensics learning resources and roadmap",
+        "  SECBOT WIN - Shows Windows pentesting resources and methodology",
+        "",
+        "Tip: Each path includes curated resources, practice labs, and recommended certifications.",
+        "Type your chosen path to begin your cybersecurity journey!"};
+    size_t numMessages = sizeof(messages) / sizeof(messages[0]);
+    for (size_t i = 0; i < numMessages; ++i)
+    {
         std::string line = messages[i];
         std::string formatted_msg = PRIVMSG_FORMAT(sender, sender, server_hostname, client.getNickname(), line + "\r\n");
         sendReply(client_fd, formatted_msg);
@@ -378,10 +423,10 @@ void windowsPentestPath(Client &client, int client_fd, std::string server_hostna
 void Server::BotCommand(int client_fd, std::vector<std::string> command)
 {
     Client &currClient = _clients[client_fd];
-    std::string sender = "~SECBOT" ;
+    std::string sender = "SECBOT";
     if (command.size() < 2)
     {
-        const char* messages[] = {
+        const char *messages[] = {
             "✦ Welcome to SECBOT - Your Security Learning Assistant! ✦",
             "【Available Learning Paths】",
             "",
@@ -406,15 +451,15 @@ void Server::BotCommand(int client_fd, std::vector<std::string> command)
             "  SECBOT WIN - Shows Windows pentesting resources and methodology",
             "",
             "Tip: Each path includes curated resources, practice labs, and recommended certifications.",
-            "Type your chosen path to begin your cybersecurity journey!"
-            };
+            "Type your chosen path to begin your cybersecurity journey!"};
 
-            size_t numMessages = sizeof(messages) / sizeof(messages[0]);
-            for (size_t i = 0; i < numMessages; ++i) {
-                std::string line = messages[i];
-                std::string formatted_msg = PRIVMSG_FORMAT(sender, sender, _hostname, currClient.getNickname(), line + "\r\n");
-                sendReply(client_fd, formatted_msg);
-            }
+        size_t numMessages = sizeof(messages) / sizeof(messages[0]);
+        for (size_t i = 0; i < numMessages; ++i)
+        {
+            std::string line = messages[i];
+            std::string formatted_msg = PRIVMSG_FORMAT(sender, sender, _hostname, currClient.getNickname(), line + "\r\n");
+            sendReply(client_fd, formatted_msg);
+        }
         return;
     }
     else if (command[1] == "WEB")
@@ -422,7 +467,9 @@ void Server::BotCommand(int client_fd, std::vector<std::string> command)
     else if (command[1] == "FOR")
         forPath(currClient, client_fd, _hostname);
     else if (command[1] == "PWN")
-        pwnPath(currClient, client_fd, _hostname); 
+        pwnPath(currClient, client_fd, _hostname);
     else if (command[1] == "WIN")
-            windowsPentestPath(currClient, client_fd, _hostname);
+        windowsPentestPath(currClient, client_fd, _hostname);
+    else
+        defaultAnswer(currClient, client_fd, _hostname);
 }

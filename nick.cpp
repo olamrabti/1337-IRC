@@ -8,6 +8,16 @@ void Server::broadcastNickChange(Client &client, const std::string &oldNick, con
         sendReply(it->second.getClientFd(), message);
 }
 
+bool isValidNickname(std::string nickname)
+{
+    for (size_t i = 0; i < nickname.size(); i++)
+    {
+        if (!isalnum(nickname[i]) && nickname[i] != '_' && nickname[i] != '-')
+            return false;
+    }
+    return true;
+}
+
 void Server::NickCommand(int client_fd, std::vector<std::string> command)
 {
     if (command.size() < 2)
@@ -20,38 +30,27 @@ void Server::NickCommand(int client_fd, std::vector<std::string> command)
         return;
 
     std::string nickname = command[1];
-    int i = 0;
-    bool validName = false;
-    while (nickname[i])
-    {
-        if (isalnum(nickname[i]))
-            validName = true;
-        if (nickname[i] == ':' || nickname[i] == '#' || nickname[i] == '&' || isspace(nickname[i]))
-        {
-            validName = false;
-            break;
-        }
-        i++;
-    }
 
-    if (!validName)
+    if (!isValidNickname(nickname))
     {
-        sendReply(client_fd, ERR_NONICKNAMEGIVEN(_clients[client_fd].getNickname(), _clients[client_fd].getHostName()));
+        sendReply(client_fd, ERR_ERRONEUSNICKNAME(currClient.getNickname(), nickname, currClient.getHostName()));
         return;
     }
 
     for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
     {
-        if (it->second.getNickname() == nickname || nickname == "~SECBOT")
+        if (it->second.getNickname() == nickname)
         {
-            sendReply(client_fd, ERR_NICKNAMEINUSE(currClient.getNickname(), nickname));
+            sendReply(client_fd, ERR_NICKNAMEINUSE(nickname));
             return;
         }
     }
 
     std::string oldNick = currClient.getNickname();
+
     currClient.setAuthStatus(0x02);
     currClient.setNickname(nickname);
+
     if (currClient.getAuthStatus() == 0x07 && currClient.getNickFlag() == 0)
     {
         sendWelcomeMessages(client_fd, currClient);
@@ -60,5 +59,4 @@ void Server::NickCommand(int client_fd, std::vector<std::string> command)
 
     if (!oldNick.empty())
         broadcastNickChange(currClient, oldNick, nickname);
-    
 }

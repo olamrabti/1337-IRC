@@ -13,34 +13,39 @@ int Server::getClientByNickname(const std::string &nickname) const
 void Server::broadcastToChannel(Client &client, const std::string &channel_name, const std::string &message)
 {
     std::map<std::string, Channel>::iterator channel_it = _channels.find(channel_name);
-    if (channel_it != _channels.end())
+    if (channel_it == _channels.end())
     {
-        std::map<std::string, Client> &clients_in_channel = channel_it->second.getClients();
-        if (clients_in_channel.find(client.getNickname()) == clients_in_channel.end())
-        {
-            sendReply(client.getClientFd(), ERR_CANNOTSENDTOCHAN(client.getHostName(), client.getNickname(), channel_name));
-            return;
-        }
+        sendReply(client.getClientFd(), ERR_NOSUCHCHANNEL(client.getHostName(), client.getNickname(), channel_name));
+        return;
+    }
 
-        for (std::map<std::string, Client>::iterator client_it = clients_in_channel.begin(); client_it != clients_in_channel.end(); ++client_it)
+    Channel &channel = channel_it->second;
+    std::vector<int> &clients_in_channel = channel.getClients();
+
+    if (std::find(clients_in_channel.begin(), clients_in_channel.end(), client.getClientFd()) == clients_in_channel.end())
+    {
+        sendReply(client.getClientFd(), ERR_CANNOTSENDTOCHAN(client.getHostName(), client.getNickname(), channel_name));
+        return;
+    }
+
+    std::string formatted_msg = ":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHostName() + " PRIVMSG " + channel_name + " :" + message + "\r\n";
+    for (std::vector<int>::iterator it = clients_in_channel.begin(); it != clients_in_channel.end(); ++it)
+    {
+        if (*it != client.getClientFd())
         {
-            if (client_it->first != client.getNickname())
+            std::map<int, Client>::iterator target_client = _clients.find(*it);
+            if (target_client != _clients.end())
             {
-                std::string formatted_msg = PRIVMSG_FORMAT(client.getNickname(), client.getUsername(), client.getHostName(), channel_name, message);
-                sendReply(client_it->second.getClientFd(), formatted_msg);
+                sendReply(target_client->second.getClientFd(), formatted_msg);
             }
         }
     }
-    else
-    {
-        sendReply(client.getClientFd(), ERR_NOSUCHCHANNEL(client.getHostName(), client.getNickname(), client.getNickname()));
-    }
 }
 
-void Server::sendToClient(const std::string &target_nick, Client &client, std::string &message)
+void Server::sendToClient(const std::string &target_nick, Client &client, const std::string &message)
 {
     int target_fd = getClientByNickname(target_nick);
-    if (target_fd != -1)
+    if (target_fd != -1 && _clients[target_fd].isFullyAuthenticated())
     {
         std::string formatted_msg = PRIVMSG_FORMAT(client.getNickname(), client.getUsername(), client.getHostName(), target_nick, message);
         sendReply(target_fd, formatted_msg);
@@ -55,7 +60,7 @@ void Server::PrivMsgCommand(Client &client, std::vector<std::string> command, st
 {
     if (command.size() < 3)
     {
-        sendReply(client.getClientFd(), ERR_NEEDMOREPARAMS(_hostname, client.getNickname(), "PRIVMSG"));
+        sendReply(client.getClientFd(), ERR_NEEDMOREPARAMS(client.getNickname(), client.getHostName(), "PRIVMSG"));
         return;
     }
     std::string target = command[1];
@@ -64,20 +69,27 @@ void Server::PrivMsgCommand(Client &client, std::vector<std::string> command, st
         message = buffer.substr(buffer.find(':') + 1);
     message.erase(std::remove(message.begin(), message.end(), '\n'), message.end());
     message.erase(std::remove(message.begin(), message.end(), '\r'), message.end());
-
     std::string sender_nick = client.getNickname();
     std::vector<std::string> target_list = split(target, ',');
 
     for (size_t i = 0; i < target_list.size(); ++i)
     {
         std::string target = target_list[i];
-        if (target[0] == '#' || target[0] == '&')
+        if (target == "SECBOT")
+        {
+            std::vector<std::string> bots_msg;
+            bots_msg.push_back("SECBOT");
+            bots_msg.push_back(message);
+            BotCommand(client.getClientFd(), bots_msg);
+        }
+
+        else if (target[0] == '#' || target[0] == '&')
         {
             std::map<std::string, Channel>::iterator channel_it = _channels.find(target);
             if (channel_it == _channels.end())
                 sendReply(client.getClientFd(), ERR_NOSUCHCHANNEL(client.getHostName(), client.getNickname(), target));
-            else if (!channel_it->second.isClientInChannel(sender_nick))
-                sendReply(client.getClientFd(), ERR_CANNOTSENDTOCHAN(client.getHostName(), client.getNickname(), target));
+            else if (!channel_it->second.isClientInChannel(client.getClientFd()))
+                sendReply(client.getClientFd(), ERR_NOTONCHANNEL(client.getHostName(), target));
             else
                 broadcastToChannel(client, target, message);
         }

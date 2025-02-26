@@ -1,10 +1,5 @@
 #include "Server.hpp"
 
-bool isValidMode(char c)
-{
-    return (c == 'i' || c == 't' || c == 'k' || c == 'o' || c == 'l');
-}
-
 int ft_atoi(std::string parameter)
 {
     size_t i = 0;
@@ -29,7 +24,7 @@ int ft_atoi(std::string parameter)
     return ((int)(signe * total));
 }
 
-bool valideNumber(const std::string &number)
+bool isValidNumber(const std::string &number)
 {
     int start = 0;
 
@@ -45,8 +40,9 @@ bool valideNumber(const std::string &number)
     return true;
 }
 
-std::vector<std::string> parseModes(const std::string &modes, Client &currClient)
+std::vector<std::string> parseModes(const std::string &modes)
 {
+    
     std::vector<std::string> result;
     bool give = true;
     for (size_t i = 0; i < modes.size(); i++)
@@ -55,161 +51,162 @@ std::vector<std::string> parseModes(const std::string &modes, Client &currClient
             give = true;
         else if (modes[i] == '-')
             give = false;
-        else if (isValidMode(modes[i]))
-            result.push_back((give ? "+" : "-") + std::string(1, modes[i]));
         else
-        {
-            sendReply(currClient.getClientFd(), ERR_UNKNOWNMODE(currClient.getHostName(), currClient.getNickname(), modes[i]));
-            return std::vector<std::string>();
-        }
+            result.push_back((give ? "+" : "-") + std::string(1, modes[i]));
     }
     return result;
 }
 
-std::vector<std::string> parseParametres(std::vector<std::string> command)
+std::vector<std::string> parseParametres(std::vector<std::string> command, std::vector<std::string> modes)
 {
     std::vector<std::string> result;
-    if (command.size() > 3)
-        for (size_t i = 3; i < command.size(); i++)
-            result.push_back(command[i]);
+    size_t paramIndex = 3;
+
+    for (size_t i = 0; i < modes.size(); i++)
+    {
+        if (modes[i] == "+o" || modes[i] == "-o" || modes[i] == "+l" || modes[i] == "+k")
+        {
+            if (paramIndex < command.size())
+                result.push_back(command[paramIndex++]);
+            else
+                result.push_back("");
+        }
+    }
+
     return result;
 }
 
-void oModeParam(Channel &currChannel, std::string parameter, std::string mode, Client &currClient, std::string _hostname)
+void Server::oModeParam(Channel &currChannel, std::string &parameter, std::string &mode, Client &currClient)
 {
     if (parameter.empty())
+        return;
+
+    std::map<int, Client>::iterator it = _clients.find(getClientFdByName(parameter));
+    if (it == _clients.end() || !it->second.isFullyAuthenticated())
     {
-        sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), currClient.getHostName(), "MODE"));
+        sendReply(currClient.getClientFd(), ERR_NOSUCHNICK(currClient.getHostName(), currClient.getNickname(), parameter));
         return;
     }
+
+    Client &targetClient = it->second;
+    if (!currChannel.isClientInChannel(targetClient.getClientFd()))
+    {
+        sendReply(currClient.getClientFd(), ERR_USERNOTINCHANNEL(currClient.getHostName(), targetClient.getNickname(), currChannel.getName()));
+        return;
+    }
+
     if (mode == "+o")
     {
-        std::map<std::string, Client>::iterator it_client;
-        it_client = currChannel.getClients().find(parameter);
-        if (it_client == currChannel.getClients().end())
+        if (!currChannel.isOperator(targetClient.getClientFd()))
         {
-            sendReply(currClient.getClientFd(), ERR_NOTONCHANNEL(parameter, currChannel.getName()));
-            return;
+            currChannel.addOperator(targetClient.getClientFd());
+            sendReply(targetClient.getClientFd(), RPL_YOUREOPER(targetClient.getNickname()));
         }
-        if (currChannel.isOperator(parameter))
-        {
-            sendReply(currClient.getClientFd(), ERR_INVALIDMODEPARAM(currClient.getNickname(), currChannel.getName(), mode, currClient.getHostName()));
-            return;
-        }
-        Client &targetClient = it_client->second;
-        currChannel.addOperator(parameter);
-        sendReply(targetClient.getClientFd(), RPL_YOUREOPER(targetClient.getNickname(), currClient.getHostName()));
-        sendReply(currClient.getClientFd(), ":" + currClient.getPrefix() + " MODE " + currChannel.getName() + " +o " + parameter + "\r\n");
-        sendReply(currClient.getClientFd(), RPL_CHANNELMODEIS(_hostname, currClient.getNickname(), currChannel.getName(), mode));
     }
-    else if (mode == "-o")
+    else if (mode == "-o" && currChannel.isOperator(targetClient.getClientFd()))
     {
-        std::map<std::string, Client>::iterator it_client;
-        it_client = currChannel.getClients().find(parameter);
-        if (it_client == currChannel.getClients().end())
-        {
-            sendReply(currClient.getClientFd(), ERR_NOTONCHANNEL(parameter, currChannel.getName()));
-            return;
-        }
-        if (!currChannel.isOperator(parameter))
-        {
-            sendReply(currClient.getClientFd(), ERR_CHANOPRIVSNEEDED(currClient.getHostName(), currClient.getNickname(), currChannel.getName()));
-            return;
-        }
-        currChannel.removeOperator(parameter);
-        sendReply(currClient.getClientFd(), ":" + currClient.getPrefix() + " MODE " + currChannel.getName() + " -o " + parameter + "\r\n");
+        currChannel.removeOperator(targetClient.getClientFd());
     }
+
+    broadcastModeChange(currClient, currChannel, mode, parameter);
 }
 
-void iModeParam(Channel &currChannel, const std::string &mode, Client &currClient)
+void Server::iModeParam(Channel &currChannel, const std::string &mode, Client &currClient)
 {
-    if (mode == "+i")
-    {
-        currChannel.setInviteOnly(true);
-        sendReply(currClient.getClientFd(), ":" + currClient.getPrefix() + " MODE " + currChannel.getName() + " +i" + "\r\n");
-    }
-    else if (mode == "-i")
-    {
-        currChannel.setInviteOnly(false);
-        sendReply(currClient.getClientFd(), ":" + currClient.getPrefix() + " MODE " + currChannel.getName() + " -i" + "\r\n");
-    }
+    currChannel.setInviteOnly(mode == "+i");
+    broadcastModeChange(currClient, currChannel, mode, "");
 }
 
-void pluskModeParam(Channel &currChannel, const std::string &parameter, const std::string &mode, Client &currClient)
+void Server::pluskModeParam(Channel &currChannel, const std::string &parameter, Client &currClient)
 {
-    if (mode == "+k")
+    if (parameter.empty())
+        return;
+
+    currChannel.setKey(parameter);
+    broadcastModeChange(currClient, currChannel, "+k", parameter);
+}
+
+void Server::minuskModeParam(Channel &currChannel, Client &currClient)
+{
+    currChannel.setKey("");
+    broadcastModeChange(currClient, currChannel, "-k", "");
+}
+
+void Server::pluslModeParam(Channel &currChannel, const std::string &parameter, Client &currClient)
+{
+    if (parameter.empty())
+        return;
+
+    if (!isValidNumber(parameter))
     {
-        if (parameter.empty())
+        sendReply(currClient.getClientFd(), ERR_INVALIDMODEPARAM(currClient.getNickname(), currChannel.getName(), "+l"));
+        return;
+    }
+
+    currChannel.setUserLimit(ft_atoi(parameter));
+    broadcastModeChange(currClient, currChannel, "+l", parameter);
+}
+
+void Server::minuslModeParam(Channel &currChannel, Client &currClient)
+{
+    currChannel.setUserLimit(0);
+    broadcastModeChange(currClient, currChannel, "-l", "");
+}
+
+
+void Server::tModeParam(Channel &currChannel, const std::string &mode, Client &currClient)
+{
+    currChannel.setTopicLock(mode == "+t");
+    broadcastModeChange(currClient, currChannel, mode, "");
+}
+
+void Server::broadcastModeChange(Client &currClient, Channel &currChannel, const std::string &mode, std::string parameter)
+{
+    std::string modeMessage = ":" + currClient.getPrefix() + " MODE " + currChannel.getName() + " " + mode;
+    if (!parameter.empty())
+        modeMessage += " " + parameter;
+    modeMessage += "\r\n";
+
+    currChannel.broadcastMessage(modeMessage, _clients);
+}
+
+void Server::sendChannelInfo(Client &currClient, Channel &currChannel)
+{
+    sendReply(currClient.getClientFd(), RPL_CHANNELMODEIS(_hostname, currClient.getNickname(), currChannel.getName(), currChannel.getChannelModes()));
+    sendReply(currClient.getClientFd(), RPL_CREATIONTIME(_hostname, currClient.getNickname(), currChannel.getName(), currChannel.getCreationDate()));
+}
+
+int Server::getClientFdByName(const std::string &nickname)
+{
+    for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+    {
+        if (it->second.getNickname() == nickname)
+            return it->first;
+    }
+    return -1;
+}
+
+bool allParamEmpty(std::vector<std::string> parameters, std::vector<std::string> modes)
+{
+    size_t paramCount = 0;
+    for (size_t i = 0; i < modes.size(); i++)
+    {
+        if (modes[i] == "+o" || modes[i] == "-o" || modes[i] == "+l" || modes[i] == "+k")
+            paramCount++;
+    }
+    if (paramCount != 0)
+    {
+        size_t total = 0;
+        for (size_t i = 0; i < paramCount; i++)
         {
-            sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), currClient.getHostName(), "MODE"));
-            return;
+            if (parameters[i] == "")
+                total++;
         }
-        currChannel.setKey(parameter);
-        sendReply(currClient.getClientFd(), ":" + currClient.getPrefix() + " MODE " + currChannel.getName() + " +k " + parameter + "\r\n");
+        if (total == paramCount)
+            return true;
     }
-}
 
-void minuskModeParam(Channel &currChannel, const std::string &mode, Client &currClient)
-{
-    if (mode == "-k")
-    {
-        currChannel.setKey("");
-        sendReply(currClient.getClientFd(), ":" + currClient.getPrefix() + " MODE " + currChannel.getName() + " -k" + "\r\n");
-    }
-}
-
-void minuslModeParam(Channel &currChannel, const std::string &mode, Client &currClient)
-{
-    if (mode == "-l")
-    {
-        currChannel.setUserLimit(0);
-        sendReply(currClient.getClientFd(), ":" + currClient.getPrefix() + " MODE " + currChannel.getName() + " -l" + "\r\n");
-    }
-}
-
-void pluslModeParam(Channel &currChannel, const std::string &parameter, const std::string &mode, Client &currClient)
-{
-    if (mode == "+l")
-    {
-        if (parameter.empty())
-        {
-            sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), currClient.getHostName(), "MODE"));
-            return;
-        }
-        if (!valideNumber(parameter))
-        {
-            sendReply(currClient.getClientFd(), ERR_INVALIDMODEPARAM(currClient.getNickname(), currChannel.getName(), mode, currClient.getHostName()));
-            return;
-        }
-
-        int limit = ft_atoi(parameter);
-        if (limit <= 0)
-        {
-            sendReply(currClient.getClientFd(), ERR_INVALIDMODEPARAM(currClient.getNickname(), currChannel.getName(), mode, currClient.getHostName()));
-            return;
-        }
-
-        currChannel.setUserLimit(limit);
-        sendReply(currClient.getClientFd(), ":" + currClient.getPrefix() + " MODE " + currChannel.getName() + " +l " + parameter + "\r\n");
-    }
-}
-
-void tModeParam(Channel &currChannel, const std::string &mode, Client &currClient)
-{
-    if (mode == "+t")
-    {
-        currChannel.setTopicLock(true);
-        sendReply(currClient.getClientFd(), ":" + currClient.getPrefix() + " MODE " + currChannel.getName() + " +t" + "\r\n");
-    }
-    else if (mode == "-t")
-    {
-        currChannel.setTopicLock(false);
-        sendReply(currClient.getClientFd(), ":" + currClient.getPrefix() + " MODE " + currChannel.getName() + " -t" + "\r\n");
-    }
-    else
-    {
-        sendReply(currClient.getClientFd(), ERR_INVALIDMODEPARAM(currClient.getNickname(), currChannel.getName(), mode, currClient.getHostName()));
-    }
+    return false;
 }
 
 void Server::channelMode(Client &currClient, std::vector<std::string> command)
@@ -219,103 +216,78 @@ void Server::channelMode(Client &currClient, std::vector<std::string> command)
         sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), currClient.getHostName(), command[0]));
         return;
     }
+
     std::string channelName = command[1];
     std::map<std::string, Channel>::iterator it = _channels.find(channelName);
-    if (command.size() == 2 && it != _channels.end())
-    {
-        sendReply(currClient.getClientFd(), RPL_CREATIONTIME(currClient.getHostName(), currClient.getNickname(), channelName, it->second.getCreationDate()));
-        return;
-    }
-    std::vector<std::string> modes;
-    if (command.size() >= 3)
-        modes = parseModes(command[2], currClient);
-    if (modes.empty())
-    {
-        sendReply(currClient.getClientFd(), ERR_UMODEUNKNOWNFLAG(currClient.getNickname(), channelName, "", currClient.getHostName()));
-        return;
-    }
-    std::vector<std::string> parameters = parseParametres(command);
-
     if (it == _channels.end())
     {
         sendReply(currClient.getClientFd(), ERR_NOSUCHCHANNEL(currClient.getHostName(), currClient.getNickname(), channelName));
         return;
     }
-    else
-    {
-        Channel &currChannel = it->second;
 
-        if (currChannel.isOperator(currClient.getNickname()) == false)
-        {
-            sendReply(currClient.getClientFd(), ERR_CHANOPRIVSNEEDED(currClient.getHostName(), currClient.getNickname(), channelName));
+    Channel &currChannel = it->second;
+
+    if (command.size() == 2)
+    {
+        sendChannelInfo(currClient, currChannel);
+        return;
+    }
+
+    if (!currChannel.isOperator(currClient.getClientFd()))
+    {
+        sendReply(currClient.getClientFd(), ERR_CHANOPRIVSNEEDED(currClient.getHostName(), currClient.getNickname(), channelName));
+        return;
+    }
+
+    std::vector<std::string> modes;
+    if (command.size() >= 3)
+    {
+        if (command[2][0] != '+' && command[2][0] != '-')
             return;
-        }
-        int paramCount = 0;
-        for (size_t i = 0; i < modes.size(); i++)
+        modes = parseModes(command[2]);
+    }
+    
+    std::vector<std::string> parameters = parseParametres(command, modes);
+    if (allParamEmpty(parameters, modes))
+    {
+        sendChannelInfo(currClient, currChannel);
+        return;
+    }
+
+    int paramCount = 0;
+    for (size_t i = 0; i < modes.size(); i++)
+    {
+        if ((modes[i] == "+o" || modes[i] == "-o"))
         {
-            if (modes[i] == "+o" || modes[i] == "-o")
-            {
-                if ((int)parameters.size() > paramCount)
-                {
-                    oModeParam(currChannel, parameters[paramCount], modes[i], currClient, _hostname); //
-                    paramCount++;
-                }
-                else
-                {
-                    sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), currClient.getHostName(), command[0]));
-                    return;
-                }
-            }
-            else if (modes[i] == "+i" || modes[i] == "-i")
-            {
-                iModeParam(currChannel, modes[i], currClient);
-            }
-            else if (modes[i] == "+k" || modes[i] == "-k")
-            {
-                if (modes[i] == "+k")
-                {
-                    if ((int)parameters.size() > paramCount)
-                    {
-                        pluskModeParam(currChannel, parameters[paramCount], modes[i], currClient);
-                        paramCount++;
-                    }
-                    else
-                    {
-                        sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), currClient.getHostName(), command[0]));
-                        return;
-                    }
-                }
-                else if (modes[i] == "-k")
-                    minuskModeParam(currChannel, modes[i], currClient);
-            }
-            else if (modes[i] == "+l" || modes[i] == "-l")
-            {
-                if (modes[i] == "+l")
-                {
-                    if ((int)parameters.size() > paramCount)
-                    {
-                        pluslModeParam(currChannel, parameters[paramCount], modes[i], currClient);
-                        paramCount++;
-                    }
-                    else
-                    {
-                        sendReply(currClient.getClientFd(), ERR_NEEDMOREPARAMS(currClient.getNickname(), currClient.getHostName(), command[0]));
-                        return;
-                    }
-                }
-                else if (modes[i] == "-l")
-                    minuslModeParam(currChannel, modes[i], currClient);
-            }
-            else if (modes[i] == "+t" || modes[i] == "-t")
-            {
-                tModeParam(currChannel, modes[i], currClient);
-            }
-            else
-            {
-                sendReply(currClient.getClientFd(), ERR_UMODEUNKNOWNFLAG(currClient.getNickname(), channelName, "", _hostname)); // TODO
-                return;
-            }
-            // currChannel.broadcastMessage(RPL_MODE(currClient.getNickname(), currClient.getUsername, _hostname, channelName, )); // TODO +lll-l 1 2 3
+            oModeParam(currChannel, parameters[paramCount++], modes[i], currClient);
+        }
+        else if (modes[i] == "+i" || modes[i] == "-i")
+        {
+            iModeParam(currChannel, modes[i], currClient);
+        }
+        else if (modes[i] == "+k")
+        {
+            pluskModeParam(currChannel, parameters[paramCount++], currClient);
+        }
+        else if (modes[i] == "-k")
+        {
+            minuskModeParam(currChannel, currClient);
+        }
+        else if (modes[i] == "+l")
+        {
+            pluslModeParam(currChannel, parameters[paramCount++], currClient);
+        }
+        else if (modes[i] == "-l")
+        {
+            minuslModeParam(currChannel, currClient);
+        }
+        else if (modes[i] == "+t" || modes[i] == "-t")
+        {
+            tModeParam(currChannel, modes[i], currClient);
+        }
+        else
+        {
+            sendReply(currClient.getClientFd(), ERR_UNKNOWNMODE(currClient.getHostName(), currClient.getNickname(), modes[i]));
         }
     }
 }

@@ -20,7 +20,7 @@ void Server::channelInvite(Client &currClient, std::vector<std::string> command)
 
     Channel &currChannel = it->second;
 
-    if (!currChannel.isOperator(currClient.getNickname()))
+    if (!currChannel.isOperator(currClient.getClientFd()))
     {
         sendReply(currClient.getClientFd(), ERR_CHANOPRIVSNEEDED(currClient.getHostName(), currClient.getNickname(),  channelName));
         return;
@@ -35,27 +35,24 @@ void Server::channelInvite(Client &currClient, std::vector<std::string> command)
             break;
         }
     }
-    if (!targetClient)
+    if (!targetClient || !targetClient->isFullyAuthenticated())
     {
         sendReply(currClient.getClientFd(), ERR_NOSUCHNICK(currClient.getHostName(), currClient.getNickname(), nickname));
         return;
     }
 
-    if (currChannel.isClientInChannel(nickname))
+    if (currChannel.isClientInChannel(targetClient->getClientFd()))
     {
         sendReply(currClient.getClientFd(), ERR_USERONCHANNEL(currClient.getHostName(), currClient.getNickname(), nickname, channelName));
         return;
     }
 
-    if (currChannel.isInvited(nickname)) // TODO
-    {
-        sendReply(currClient.getClientFd(), "Error: " + nickname + " is already invited to channel " + channelName);
+    if (currChannel.isInvited(targetClient->getClientFd()))
         return;
-    }
 
-    currChannel.addInvited(nickname);
+    currChannel.addInvited(targetClient->getClientFd());
 
     sendReply(currClient.getClientFd(), RPL_INVITING(currClient.getHostName(), currClient.getNickname(), nickname, channelName));
-    currChannel.broadcastMessage(RPL_INVITE(currClient.getNickname(), currClient.getUsername(), targetClient->getHostName(), channelName, nickname));
+    currChannel.broadcastMessage(RPL_INVITE(currClient.getNickname(), currClient.getUsername(), targetClient->getHostName(), channelName, nickname), _clients);
 
 }

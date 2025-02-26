@@ -21,7 +21,8 @@ void Server::PassCommand(int client_fd, std::vector<std::string> command)
         if (currClient.getAuthStatus() < 0x01)
             currClient.setAuthStatus(0x01);
     }
-    else {
+    else
+    {
         sendReply(client_fd, ERR_PASSWDMISMATCH(_clients[client_fd].getNickname(), _clients[client_fd].getHostName()));
     }
 }
